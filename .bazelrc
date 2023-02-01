@@ -1,0 +1,72 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# https://docs.opentitan.org/doc/rm/c_cpp_coding_style/#cxx-version specifies
+build --action_env=BAZEL_CXXOPTS="-std=gnu++14"
+build --cxxopt='-std=gnu++14'
+build --conlyopt='-std=gnu11'
+
+# Never strip debugging information so that we can produce annotated
+# disassemblies when compilation mode is fastbuild.
+build --strip='never'
+
+# Bazel embedded enables the following feature which along with -std=c11 and
+# our codebase generates a lot of warnings by setting the -Wpedantic flag
+build --features=-all_warnings
+
+# Enable toolchain resolution with cc
+build --incompatible_enable_cc_toolchain_resolution
+
+# This lets us generate key/value pairs for the workspace which can be
+# accessed like we do in util/BUILD
+build --workspace_status_command=util/get_workspace_status.sh
+
+# This enables convenient building for opentitan targets with the argument
+# --config=riscv32
+build:riscv32 --platforms=@crt//platforms/riscv32:opentitan
+
+# Generate coverage in lcov format, which can be post-processed by lcov
+# into html-formatted reports.
+coverage --combined_report=lcov --instrument_test_targets --experimental_cc_coverage
+
+# Verilator is built for 4 cores and can time out if bazel is running more
+# than 1 test per four cores.
+# Until we get the built-in tag "cpu:4" to work for verilator tests, we can run
+# 1 test per 4 cores to avoid verilator performance falloff and timeouts we'd
+# otherwise see on machines with fewer than 40 cores.
+test --local_test_jobs=HOST_CPUS*0.25
+
+# AddressSanitizer (ASan) catches runtime out-of-bounds accesses to globals, the
+# stack, and (less importantly for OpenTitan) the heap. ASan instruments
+# programs at compile time and also requires a runtime library.
+#
+# ASan documentation: https://clang.llvm.org/docs/AddressSanitizer.html
+#
+# Enable ASan with --config=asan.
+build:asan --copt -fsanitize=address
+build:asan --copt -g
+build:asan --strip=never
+build:asan --copt -fno-omit-frame-pointer
+build:asan --linkopt -fsanitize=address
+
+# UndefinedBehaviorSanitizer (UBSan) catches C/C++ undefined behavior at
+# runtime, e.g. signed integer overflow. UBSan instruments programs at compile
+# time and also requires a runtime library.
+#
+# UBSan documentation:
+# https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+#
+# Enable UBSan with --config=ubsan.
+build:ubsan --copt -fsanitize=undefined
+build:ubsan --copt -g
+build:ubsan --strip=never
+build:ubsan --copt -fno-omit-frame-pointer
+build:ubsan --linkopt -fsanitize=undefined
+
+# Enable the rust 'clippy' linter.
+build --aspects=@rules_rust//rust:defs.bzl%rust_clippy_aspect
+build --output_groups=+clippy_checks
+
+# Import site-specific configuration.
+try-import .bazelrc-site
