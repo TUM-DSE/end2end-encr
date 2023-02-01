@@ -14,6 +14,7 @@
 #include "sw/device/lib/dif/dif_alert_handler.h"
 #include "sw/device/lib/dif/dif_aon_timer.h"
 #include "sw/device/lib/dif/dif_clkmgr.h"
+#include "sw/device/lib/dif/dif_cmod.h"
 #include "sw/device/lib/dif/dif_csrng.h"
 #include "sw/device/lib/dif/dif_edn.h"
 #include "sw/device/lib/dif/dif_entropy_src.h"
@@ -57,6 +58,8 @@ static dif_adc_ctrl_t adc_ctrl_aon;
 static dif_aes_t aes;
 static dif_aon_timer_t aon_timer_aon;
 static dif_clkmgr_t clkmgr_aon;
+static dif_cmod_t cmod0;
+static dif_cmod_t cmod1;
 static dif_csrng_t csrng;
 static dif_edn_t edn0;
 static dif_edn_t edn1;
@@ -113,6 +116,12 @@ static void init_peripherals(void) {
 
   base_addr = mmio_region_from_addr(TOP_EARLGREY_CLKMGR_AON_BASE_ADDR);
   CHECK_DIF_OK(dif_clkmgr_init(base_addr, &clkmgr_aon));
+
+  base_addr = mmio_region_from_addr(TOP_EARLGREY_CMOD0_BASE_ADDR);
+  CHECK_DIF_OK(dif_cmod_init(base_addr, &cmod0));
+
+  base_addr = mmio_region_from_addr(TOP_EARLGREY_CMOD1_BASE_ADDR);
+  CHECK_DIF_OK(dif_cmod_init(base_addr, &cmod1));
 
   base_addr = mmio_region_from_addr(TOP_EARLGREY_CSRNG_BASE_ADDR);
   CHECK_DIF_OK(dif_csrng_init(base_addr, &csrng));
@@ -331,6 +340,36 @@ static void trigger_alert_test(void) {
 
     // Verify that alert handler received it.
     exp_alert = kTopEarlgreyAlertIdClkmgrAonRecovFault + i;
+    CHECK_DIF_OK(dif_alert_handler_alert_is_cause(
+        &alert_handler, exp_alert, &is_cause));
+    CHECK(is_cause, "Expect alert %d!", exp_alert);
+
+    // Clear alert cause register
+    CHECK_DIF_OK(dif_alert_handler_alert_acknowledge(
+        &alert_handler, exp_alert));
+  }
+
+  // Write cmod's alert_test reg and check alert_cause.
+  for (int i = 0; i < 1; ++i) {
+    CHECK_DIF_OK(dif_cmod_alert_force(&cmod0, kDifCmodAlertFatalFault + i));
+
+    // Verify that alert handler received it.
+    exp_alert = kTopEarlgreyAlertIdCmod0FatalFault + i;
+    CHECK_DIF_OK(dif_alert_handler_alert_is_cause(
+        &alert_handler, exp_alert, &is_cause));
+    CHECK(is_cause, "Expect alert %d!", exp_alert);
+
+    // Clear alert cause register
+    CHECK_DIF_OK(dif_alert_handler_alert_acknowledge(
+        &alert_handler, exp_alert));
+  }
+
+  // Write cmod's alert_test reg and check alert_cause.
+  for (int i = 0; i < 1; ++i) {
+    CHECK_DIF_OK(dif_cmod_alert_force(&cmod1, kDifCmodAlertFatalFault + i));
+
+    // Verify that alert handler received it.
+    exp_alert = kTopEarlgreyAlertIdCmod1FatalFault + i;
     CHECK_DIF_OK(dif_alert_handler_alert_is_cause(
         &alert_handler, exp_alert, &is_cause));
     CHECK(is_cause, "Expect alert %d!", exp_alert);

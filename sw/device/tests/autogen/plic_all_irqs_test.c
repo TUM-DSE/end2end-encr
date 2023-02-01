@@ -14,6 +14,7 @@
 #include "sw/device/lib/dif/dif_adc_ctrl.h"
 #include "sw/device/lib/dif/dif_alert_handler.h"
 #include "sw/device/lib/dif/dif_aon_timer.h"
+#include "sw/device/lib/dif/dif_cmod.h"
 #include "sw/device/lib/dif/dif_csrng.h"
 #include "sw/device/lib/dif/dif_edn.h"
 #include "sw/device/lib/dif/dif_entropy_src.h"
@@ -46,6 +47,8 @@
 static dif_adc_ctrl_t adc_ctrl_aon;
 static dif_alert_handler_t alert_handler;
 static dif_aon_timer_t aon_timer_aon;
+static dif_cmod_t cmod0;
+static dif_cmod_t cmod1;
 static dif_csrng_t csrng;
 static dif_edn_t edn0;
 static dif_edn_t edn1;
@@ -97,6 +100,8 @@ static volatile dif_alert_handler_irq_t alert_handler_irq_expected;
 static volatile dif_alert_handler_irq_t alert_handler_irq_serviced;
 static volatile dif_aon_timer_irq_t aon_timer_irq_expected;
 static volatile dif_aon_timer_irq_t aon_timer_irq_serviced;
+static volatile dif_cmod_irq_t cmod_irq_expected;
+static volatile dif_cmod_irq_t cmod_irq_serviced;
 static volatile dif_csrng_irq_t csrng_irq_expected;
 static volatile dif_csrng_irq_t csrng_irq_serviced;
 static volatile dif_edn_irq_t edn_irq_expected;
@@ -225,6 +230,50 @@ void ottf_external_isr(void) {
       // TODO: Check Interrupt type then clear INTR_TEST if needed.
       CHECK_DIF_OK(dif_aon_timer_irq_force(&aon_timer_aon, irq, false));
       CHECK_DIF_OK(dif_aon_timer_irq_acknowledge(&aon_timer_aon, irq));
+      break;
+    }
+
+    case kTopEarlgreyPlicPeripheralCmod0: {
+      dif_cmod_irq_t irq = (dif_cmod_irq_t)(
+          plic_irq_id -
+          (dif_rv_plic_irq_id_t)kTopEarlgreyPlicIrqIdCmod0TxWatermark);
+      CHECK(irq == cmod_irq_expected,
+            "Incorrect cmod0 IRQ triggered: exp = %d, obs = %d",
+            cmod_irq_expected, irq);
+      cmod_irq_serviced = irq;
+
+      dif_cmod_irq_state_snapshot_t snapshot;
+      CHECK_DIF_OK(dif_cmod_irq_get_state(&cmod0, &snapshot));
+      CHECK(snapshot == (dif_cmod_irq_state_snapshot_t)(1 << irq),
+            "Only cmod0 IRQ %d expected to fire. Actual interrupt "
+            "status = %x",
+            irq, snapshot);
+
+      // TODO: Check Interrupt type then clear INTR_TEST if needed.
+      CHECK_DIF_OK(dif_cmod_irq_force(&cmod0, irq, false));
+      CHECK_DIF_OK(dif_cmod_irq_acknowledge(&cmod0, irq));
+      break;
+    }
+
+    case kTopEarlgreyPlicPeripheralCmod1: {
+      dif_cmod_irq_t irq = (dif_cmod_irq_t)(
+          plic_irq_id -
+          (dif_rv_plic_irq_id_t)kTopEarlgreyPlicIrqIdCmod1TxWatermark);
+      CHECK(irq == cmod_irq_expected,
+            "Incorrect cmod1 IRQ triggered: exp = %d, obs = %d",
+            cmod_irq_expected, irq);
+      cmod_irq_serviced = irq;
+
+      dif_cmod_irq_state_snapshot_t snapshot;
+      CHECK_DIF_OK(dif_cmod_irq_get_state(&cmod1, &snapshot));
+      CHECK(snapshot == (dif_cmod_irq_state_snapshot_t)(1 << irq),
+            "Only cmod1 IRQ %d expected to fire. Actual interrupt "
+            "status = %x",
+            irq, snapshot);
+
+      // TODO: Check Interrupt type then clear INTR_TEST if needed.
+      CHECK_DIF_OK(dif_cmod_irq_force(&cmod1, irq, false));
+      CHECK_DIF_OK(dif_cmod_irq_acknowledge(&cmod1, irq));
       break;
     }
 
@@ -846,6 +895,12 @@ static void peripherals_init(void) {
   base_addr = mmio_region_from_addr(TOP_EARLGREY_AON_TIMER_AON_BASE_ADDR);
   CHECK_DIF_OK(dif_aon_timer_init(base_addr, &aon_timer_aon));
 
+  base_addr = mmio_region_from_addr(TOP_EARLGREY_CMOD0_BASE_ADDR);
+  CHECK_DIF_OK(dif_cmod_init(base_addr, &cmod0));
+
+  base_addr = mmio_region_from_addr(TOP_EARLGREY_CMOD1_BASE_ADDR);
+  CHECK_DIF_OK(dif_cmod_init(base_addr, &cmod1));
+
   base_addr = mmio_region_from_addr(TOP_EARLGREY_CSRNG_BASE_ADDR);
   CHECK_DIF_OK(dif_csrng_init(base_addr, &csrng));
 
@@ -938,6 +993,8 @@ static void peripheral_irqs_clear(void) {
   CHECK_DIF_OK(dif_adc_ctrl_irq_acknowledge_all(&adc_ctrl_aon));
   CHECK_DIF_OK(dif_alert_handler_irq_acknowledge_all(&alert_handler));
   CHECK_DIF_OK(dif_aon_timer_irq_acknowledge_all(&aon_timer_aon));
+  CHECK_DIF_OK(dif_cmod_irq_acknowledge_all(&cmod0));
+  CHECK_DIF_OK(dif_cmod_irq_acknowledge_all(&cmod1));
   CHECK_DIF_OK(dif_csrng_irq_acknowledge_all(&csrng));
   CHECK_DIF_OK(dif_edn_irq_acknowledge_all(&edn0));
   CHECK_DIF_OK(dif_edn_irq_acknowledge_all(&edn1));
@@ -975,6 +1032,8 @@ static void peripheral_irqs_enable(void) {
       (dif_adc_ctrl_irq_state_snapshot_t)UINT_MAX;
   dif_alert_handler_irq_state_snapshot_t alert_handler_irqs =
       (dif_alert_handler_irq_state_snapshot_t)UINT_MAX;
+  dif_cmod_irq_state_snapshot_t cmod_irqs =
+      (dif_cmod_irq_state_snapshot_t)UINT_MAX;
   dif_csrng_irq_state_snapshot_t csrng_irqs =
       (dif_csrng_irq_state_snapshot_t)UINT_MAX;
   dif_edn_irq_state_snapshot_t edn_irqs =
@@ -1020,6 +1079,10 @@ static void peripheral_irqs_enable(void) {
       dif_adc_ctrl_irq_restore_all(&adc_ctrl_aon, &adc_ctrl_irqs));
   CHECK_DIF_OK(
       dif_alert_handler_irq_restore_all(&alert_handler, &alert_handler_irqs));
+  CHECK_DIF_OK(
+      dif_cmod_irq_restore_all(&cmod0, &cmod_irqs));
+  CHECK_DIF_OK(
+      dif_cmod_irq_restore_all(&cmod1, &cmod_irqs));
   CHECK_DIF_OK(
       dif_csrng_irq_restore_all(&csrng, &csrng_irqs));
   CHECK_DIF_OK(
@@ -1130,6 +1193,34 @@ static void peripheral_irqs_trigger(void) {
           "Incorrect aon_timer_aon IRQ serviced: exp = %d, obs = %d", irq,
           aon_timer_irq_serviced);
     LOG_INFO("IRQ %d from aon_timer_aon is serviced.", irq);
+  }
+
+  peripheral_expected = kTopEarlgreyPlicPeripheralCmod0;
+  for (dif_cmod_irq_t irq = kDifCmodIrqTxWatermark;
+       irq <= kDifCmodIrqRxOverflow; ++irq) {
+    cmod_irq_expected = irq;
+    LOG_INFO("Triggering cmod0 IRQ %d.", irq);
+    CHECK_DIF_OK(dif_cmod_irq_force(&cmod0, irq, true));
+
+    // TODO: Make race-condition free
+    CHECK(cmod_irq_serviced == irq,
+          "Incorrect cmod0 IRQ serviced: exp = %d, obs = %d", irq,
+          cmod_irq_serviced);
+    LOG_INFO("IRQ %d from cmod0 is serviced.", irq);
+  }
+
+  peripheral_expected = kTopEarlgreyPlicPeripheralCmod1;
+  for (dif_cmod_irq_t irq = kDifCmodIrqTxWatermark;
+       irq <= kDifCmodIrqRxOverflow; ++irq) {
+    cmod_irq_expected = irq;
+    LOG_INFO("Triggering cmod1 IRQ %d.", irq);
+    CHECK_DIF_OK(dif_cmod_irq_force(&cmod1, irq, true));
+
+    // TODO: Make race-condition free
+    CHECK(cmod_irq_serviced == irq,
+          "Incorrect cmod1 IRQ serviced: exp = %d, obs = %d", irq,
+          cmod_irq_serviced);
+    LOG_INFO("IRQ %d from cmod1 is serviced.", irq);
   }
 
   peripheral_expected = kTopEarlgreyPlicPeripheralCsrng;
