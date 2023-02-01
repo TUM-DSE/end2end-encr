@@ -97,6 +97,19 @@ cc_library(
 )
 
 cc_library(
+    name = "cmod_testutils",
+    srcs = ["cmod_testutils.c"],
+    hdrs = ["cmod_testutils.h"],
+    target_compatible_with = [OPENTITAN_CPU],
+    deps = [
+        "//sw/device/lib/dif:cmod",
+        "//sw/device/lib/runtime:ibex",
+        "//sw/device/lib/runtime:log",
+        "//sw/device/lib/testing/test_framework:check",
+    ],
+)
+
+cc_library(
     name = "csrng_testutils",
     srcs = ["csrng_testutils.c"],
     hdrs = ["csrng_testutils.h"],
