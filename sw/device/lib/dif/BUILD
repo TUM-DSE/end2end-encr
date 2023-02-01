@@ -1163,3 +1163,32 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "cmod",
+    srcs = [
+        "autogen/dif_cmod_autogen.c",
+        "autogen/dif_cmod_autogen.h",
+        "dif_cmod.c",
+    ],
+    hdrs = ["dif_cmod.h"],
+    deps = [
+        ":base",
+        "//hw/ip/cmod/data:cmod_regs",
+        "//sw/device/lib/base:bitfield",
+        "//sw/device/lib/base:mmio",
+    ],
+)
+
+cc_test(
+    name = "cmod_unittest",
+    srcs = [
+        "autogen/dif_cmod_autogen_unittest.cc",
+        "dif_cmod_unittest.cc",
+    ],
+    deps = [
+        ":test_base",
+        ":cmod",
+        "@googletest//:gtest_main",
+    ],
+)
