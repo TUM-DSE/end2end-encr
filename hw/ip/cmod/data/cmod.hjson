@@ -1,0 +1,195 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{ name: "cmod",
+  clocking: [{clock: "clk_i", reset: "rst_ni"}],
+  // available_input_list ... TODO:
+  // available_output_list ... TODO:
+  bus_interfaces: [
+    { protocol: "tlul", direction: "device" }
+  ],
+  interrupt_list: [
+    { name: "tx_watermark"
+      desc: "Raised if the transmit FIFO is past the high-water mark."}
+    { name: "rx_watermark"
+      desc: "Raised if the receive FIFO is past the high-water mark."}
+    { name: "tx_empty"
+      desc: "Raised if the transmit FIFO has emptied."}
+    { name: "rx_overflow"
+      desc: "Raised if the receive FIFO has overflown."}
+  ],
+  alert_list: [
+    { name: "fatal_fault",
+      desc: '''
+      This fatal alert is triggered when a fatal TL-UL bus integrity fault is detected.
+      '''
+    }
+  ],
+  countermeasures: [
+    { name: "BUS.INTEGRITY",
+      desc: "End-to-end bus integrity scheme."
+    }
+  ],
+  param_list: [
+    { name:    "NumRegsData",
+      type:    "int",
+      default: "4",
+      desc:    "Number of registers for multiregister WDATA and RDATA.",
+      local:   "true"
+    }
+  ],
+  regwidth: "32",
+  registers: [
+    { name:     "CTRL",
+      desc:     "CMOD control register",
+      swaccess: "rw",
+      hwaccess: "hro",
+      fields: [
+        {
+          bits: "0",
+          name: "TXTRIGGER",
+          desc: "Starts the transmission of a new message."
+        }
+        { bits: "1",
+          name: "TXEND",
+          desc: "Marks the last data block of a message."
+        }
+        { bits: "3:2",
+          name: "TXILVL",
+          desc: '''Trigger level for tx_watermark interrupt. If the FIFO depth is smaller to
+                the setting, it raises a tx_watermark interrupt.
+                ''',
+          enum: [
+            { value: "0",
+              name:  "txlvl2",
+              desc:  "2 data blocks"
+            },
+            { value: "1",
+              name:  "txlvl3",
+              desc:  "3 data blocks"
+            },
+            { value: "2",
+              name:  "txlvl4",
+              desc:  "4 data blocks"
+            }
+          ]
+        }
+        { bits: "5:4",
+          name: "RXILVL",
+          desc: '''Trigger level for rx_watermark interrupt. If the FIFO depth is greater or equal to
+                the setting, it raises a rx_watermark interrupt.
+                ''',
+          enum: [
+            { value: "0",
+              name:  "rxlvl1",
+              desc:  "1 data block"
+            },
+            { value: "1",
+              name:  "rxlvl2",
+              desc:  "2 data blocks"
+            },
+            { value: "2",
+              name:  "rxlvl3",
+              desc:  "3 data blocks"
+            }
+          ]
+        }
+      ]
+    },
+    { name:     "STATUS",
+      desc:     "CMOD status register",
+      swaccess: "ro",
+      hwaccess: "hrw",
+      hwext:    "true",
+      hwre:     "true",
+      fields: [
+        { bits: "0",
+          name: "TXFULL",
+          desc: "TX buffer is full."
+        }
+        { bits: "1",
+          name: "RXFULL",
+          desc: "RX buffer is full."
+        }
+        { bits: "2",
+          name: "TXEMPTY",
+          desc: "TX buffer is empty"
+        }
+        { bits:   "3",
+          name:   "TX",
+          desc:   "The CMOD unit is transmitting (1) or idle (0)."
+        }
+        { bits: "4",
+          name: "RXVALID", // TODO: Would it be better to rename it to RDATA_VALID?
+          desc: "Data in cmod.RDATA is valid."
+        }
+        { bits: "7:5",
+          name: "TXLVL",
+          desc: "Current fill level of TX FIFO."
+        },
+        { bits: "10:8",
+          name: "RXLVL",
+          desc: "Current fill level of RX FIFO."
+        }
+        {
+          bits: "11",
+          name: "RXLAST",
+          desc: "Marks the last data block of a message."
+        }
+      ]
+    },
+    { multireg: {
+      name:     "WDATA",
+      resval:   "0",
+      desc:     "Data to be transmitted.",
+      count:    "NumRegsData",
+      cname:    "WDATA",
+      swaccess: "wo",
+      hwaccess: "hrw",
+      hwqe:     "true",
+      fields: [
+        { bits: "31:0" }
+      ]
+      }
+    },
+    { multireg: {
+      name:     "RDATA",
+      resval:   "0",
+      desc:     "If cmod.RXVALID is `1`, data that was received.",
+      count:    "NumRegsData",
+      cname:    "RXDATA",
+      swaccess: "ro",
+      hwaccess: "hrw",
+      hwext:    "true",
+      hwre:     "true",
+      fields: [
+        { bits: "31:0" }
+      ]
+      }
+    }
+  ],
+  inter_signal_list: [
+    { name:     "tx",
+      struct:   "cmod_req",
+      package:  "cmod_pkg",
+      type:     "uni",
+      act:      "req"
+    }
+    { name:     "rx",
+      struct:   "cmod_rcv",
+      package:  "cmod_pkg",
+      type:     "uni",
+      act:      "rcv"
+    }
+    { name:   "tx_rready",
+      struct: "logic",
+      type:   "uni",
+      act:    "rcv"
+    }
+    { name:   "rx_wready",
+      struct: "logic",
+      type:   "uni",
+      act:    "req"
+    }
+  ],
+}
