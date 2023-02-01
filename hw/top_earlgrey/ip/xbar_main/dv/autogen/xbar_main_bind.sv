@@ -170,5 +170,17 @@ module xbar_main_bind;
     .h2d    (tl_sram_ctrl_main__ram_o),
     .d2h    (tl_sram_ctrl_main__ram_i)
   );
+  bind xbar_main tlul_assert #(.EndpointType("Host")) tlul_assert_device_cmod0 (
+    .clk_i  (clk_main_i),
+    .rst_ni (rst_main_ni),
+    .h2d    (tl_cmod0_o),
+    .d2h    (tl_cmod0_i)
+  );
+  bind xbar_main tlul_assert #(.EndpointType("Host")) tlul_assert_device_cmod1 (
+    .clk_i  (clk_main_i),
+    .rst_ni (rst_main_ni),
+    .h2d    (tl_cmod1_o),
+    .d2h    (tl_cmod1_i)
+  );
 
 endmodule

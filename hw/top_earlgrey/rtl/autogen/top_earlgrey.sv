@@ -80,6 +80,8 @@ module top_earlgrey #(
   parameter bit EntropySrcStub = 0,
   // parameters for edn0
   // parameters for edn1
+  // parameters for cmod0
+  // parameters for cmod1
   // parameters for sram_ctrl_main
   parameter bit SramCtrlMainInstrExec = 1,
   // parameters for rom_ctrl
@@ -351,12 +353,14 @@ module top_earlgrey #(
   // entropy_src
   // edn0
   // edn1
+  // cmod0
+  // cmod1
   // sram_ctrl_main
   // rom_ctrl
   // rv_core_ibex
 
 
-  logic [184:0]  intr_vector;
+  logic [192:0]  intr_vector;
   // Interrupt source list
   logic intr_uart0_tx_watermark;
   logic intr_uart0_rx_watermark;
@@ -511,6 +515,14 @@ module top_earlgrey #(
   logic intr_edn0_edn_fatal_err;
   logic intr_edn1_edn_cmd_req_done;
   logic intr_edn1_edn_fatal_err;
+  logic intr_cmod0_tx_watermark;
+  logic intr_cmod0_rx_watermark;
+  logic intr_cmod0_tx_empty;
+  logic intr_cmod0_rx_overflow;
+  logic intr_cmod1_tx_watermark;
+  logic intr_cmod1_rx_watermark;
+  logic intr_cmod1_tx_empty;
+  logic intr_cmod1_rx_overflow;
 
   // Alert list
   prim_alert_pkg::alert_tx_t [alert_pkg::NAlerts-1:0]  alert_tx;
@@ -610,6 +622,10 @@ module top_earlgrey #(
   spi_device_pkg::passthrough_rsp_t       spi_device_passthrough_rsp;
   logic       rv_dm_ndmreset_req;
   prim_mubi_pkg::mubi4_t       rstmgr_aon_sw_rst_req;
+  cmod_pkg::cmod_req_t       cmod0_tx;
+  cmod_pkg::cmod_req_t       cmod1_tx;
+  logic       cmod0_rx_wready;
+  logic       cmod1_rx_wready;
   logic [5:0] pwrmgr_aon_wakeups;
   logic [1:0] pwrmgr_aon_rstreqs;
   tlul_pkg::tl_h2d_t       main_tl_rv_core_ibex__corei_req;
@@ -666,6 +682,10 @@ module top_earlgrey #(
   tlul_pkg::tl_d2h_t       sram_ctrl_main_regs_tl_rsp;
   tlul_pkg::tl_h2d_t       sram_ctrl_main_ram_tl_req;
   tlul_pkg::tl_d2h_t       sram_ctrl_main_ram_tl_rsp;
+  tlul_pkg::tl_h2d_t       cmod0_tl_req;
+  tlul_pkg::tl_d2h_t       cmod0_tl_rsp;
+  tlul_pkg::tl_h2d_t       cmod1_tl_req;
+  tlul_pkg::tl_d2h_t       cmod1_tl_rsp;
   tlul_pkg::tl_h2d_t       uart0_tl_req;
   tlul_pkg::tl_d2h_t       uart0_tl_rsp;
   tlul_pkg::tl_h2d_t       uart1_tl_req;
@@ -2469,8 +2489,58 @@ module top_earlgrey #(
       .clk_i (clkmgr_aon_clocks.clk_main_secure),
       .rst_ni (rstmgr_aon_resets.rst_lc_n[rstmgr_pkg::Domain0Sel])
   );
+  cmod #(
+    .AlertAsyncOn(alert_handler_reg_pkg::AsyncOn[59:59])
+  ) u_cmod0 (
+
+      // Interrupt
+      .intr_tx_watermark_o (intr_cmod0_tx_watermark),
+      .intr_rx_watermark_o (intr_cmod0_rx_watermark),
+      .intr_tx_empty_o     (intr_cmod0_tx_empty),
+      .intr_rx_overflow_o  (intr_cmod0_rx_overflow),
+      // [59]: fatal_fault
+      .alert_tx_o  ( alert_tx[59:59] ),
+      .alert_rx_i  ( alert_rx[59:59] ),
+
+      // Inter-module signals
+      .tx_o(cmod0_tx),
+      .rx_i(cmod1_tx),
+      .tx_rready_i(cmod1_rx_wready),
+      .rx_wready_o(cmod0_rx_wready),
+      .tl_i(cmod0_tl_req),
+      .tl_o(cmod0_tl_rsp),
+
+      // Clock and reset connections
+      .clk_i (clkmgr_aon_clocks.clk_main_infra),
+      .rst_ni (rstmgr_aon_resets.rst_lc_n[rstmgr_pkg::Domain0Sel])
+  );
+  cmod #(
+    .AlertAsyncOn(alert_handler_reg_pkg::AsyncOn[60:60])
+  ) u_cmod1 (
+
+      // Interrupt
+      .intr_tx_watermark_o (intr_cmod1_tx_watermark),
+      .intr_rx_watermark_o (intr_cmod1_rx_watermark),
+      .intr_tx_empty_o     (intr_cmod1_tx_empty),
+      .intr_rx_overflow_o  (intr_cmod1_rx_overflow),
+      // [60]: fatal_fault
+      .alert_tx_o  ( alert_tx[60:60] ),
+      .alert_rx_i  ( alert_rx[60:60] ),
+
+      // Inter-module signals
+      .tx_o(cmod1_tx),
+      .rx_i(cmod0_tx),
+      .tx_rready_i(cmod0_rx_wready),
+      .rx_wready_o(cmod1_rx_wready),
+      .tl_i(cmod1_tl_req),
+      .tl_o(cmod1_tl_rsp),
+
+      // Clock and reset connections
+      .clk_i (clkmgr_aon_clocks.clk_main_infra),
+      .rst_ni (rstmgr_aon_resets.rst_lc_n[rstmgr_pkg::Domain0Sel])
+  );
   sram_ctrl #(
-    .AlertAsyncOn(alert_handler_reg_pkg::AsyncOn[59:59]),
+    .AlertAsyncOn(alert_handler_reg_pkg::AsyncOn[61:61]),
     .RndCnstSramKey(RndCnstSramCtrlMainSramKey),
     .RndCnstSramNonce(RndCnstSramCtrlMainSramNonce),
     .RndCnstLfsrSeed(RndCnstSramCtrlMainLfsrSeed),
@@ -2478,9 +2548,9 @@ module top_earlgrey #(
     .MemSizeRam(131072),
     .InstrExec(SramCtrlMainInstrExec)
   ) u_sram_ctrl_main (
-      // [59]: fatal_error
-      .alert_tx_o  ( alert_tx[59:59] ),
-      .alert_rx_i  ( alert_rx[59:59] ),
+      // [61]: fatal_error
+      .alert_tx_o  ( alert_tx[61:61] ),
+      .alert_rx_i  ( alert_rx[61:61] ),
 
       // Inter-module signals
       .sram_otp_key_o(otp_ctrl_sram_otp_key_req[0]),
@@ -2501,15 +2571,15 @@ module top_earlgrey #(
       .rst_otp_ni (rstmgr_aon_resets.rst_lc_io_div4_n[rstmgr_pkg::Domain0Sel])
   );
   rom_ctrl #(
-    .AlertAsyncOn(alert_handler_reg_pkg::AsyncOn[60:60]),
+    .AlertAsyncOn(alert_handler_reg_pkg::AsyncOn[62:62]),
     .BootRomInitFile(RomCtrlBootRomInitFile),
     .RndCnstScrNonce(RndCnstRomCtrlScrNonce),
     .RndCnstScrKey(RndCnstRomCtrlScrKey),
     .SecDisableScrambling(SecRomCtrlDisableScrambling)
   ) u_rom_ctrl (
-      // [60]: fatal
-      .alert_tx_o  ( alert_tx[60:60] ),
-      .alert_rx_i  ( alert_rx[60:60] ),
+      // [62]: fatal
+      .alert_tx_o  ( alert_tx[62:62] ),
+      .alert_rx_i  ( alert_rx[62:62] ),
 
       // Inter-module signals
       .rom_cfg_i(ast_rom_cfg),
@@ -2527,7 +2597,7 @@ module top_earlgrey #(
       .rst_ni (rstmgr_aon_resets.rst_lc_n[rstmgr_pkg::Domain0Sel])
   );
   rv_core_ibex #(
-    .AlertAsyncOn(alert_handler_reg_pkg::AsyncOn[64:61]),
+    .AlertAsyncOn(alert_handler_reg_pkg::AsyncOn[66:63]),
     .RndCnstLfsrSeed(RndCnstRvCoreIbexLfsrSeed),
     .RndCnstLfsrPerm(RndCnstRvCoreIbexLfsrPerm),
     .RndCnstIbexKeyDefault(RndCnstRvCoreIbexIbexKeyDefault),
@@ -2554,12 +2624,12 @@ module top_earlgrey #(
     .DmExceptionAddr(RvCoreIbexDmExceptionAddr),
     .PipeLine(RvCoreIbexPipeLine)
   ) u_rv_core_ibex (
-      // [61]: fatal_sw_err
-      // [62]: recov_sw_err
-      // [63]: fatal_hw_err
-      // [64]: recov_hw_err
-      .alert_tx_o  ( alert_tx[64:61] ),
-      .alert_rx_i  ( alert_rx[64:61] ),
+      // [63]: fatal_sw_err
+      // [64]: recov_sw_err
+      // [65]: fatal_hw_err
+      // [66]: recov_hw_err
+      .alert_tx_o  ( alert_tx[66:63] ),
+      .alert_rx_i  ( alert_rx[66:63] ),
 
       // Inter-module signals
       .rst_cpu_n_o(),
@@ -2603,6 +2673,14 @@ module top_earlgrey #(
   );
   // interrupt assignments
   assign intr_vector = {
+      intr_cmod1_rx_overflow, // IDs [192 +: 1]
+      intr_cmod1_tx_empty, // IDs [191 +: 1]
+      intr_cmod1_rx_watermark, // IDs [190 +: 1]
+      intr_cmod1_tx_watermark, // IDs [189 +: 1]
+      intr_cmod0_rx_overflow, // IDs [188 +: 1]
+      intr_cmod0_tx_empty, // IDs [187 +: 1]
+      intr_cmod0_rx_watermark, // IDs [186 +: 1]
+      intr_cmod0_tx_watermark, // IDs [185 +: 1]
       intr_edn1_edn_fatal_err, // IDs [184 +: 1]
       intr_edn1_edn_cmd_req_done, // IDs [183 +: 1]
       intr_edn0_edn_fatal_err, // IDs [182 +: 1]
@@ -2879,6 +2957,14 @@ module top_earlgrey #(
     // port: tl_sram_ctrl_main__ram
     .tl_sram_ctrl_main__ram_o(sram_ctrl_main_ram_tl_req),
     .tl_sram_ctrl_main__ram_i(sram_ctrl_main_ram_tl_rsp),
+
+    // port: tl_cmod0
+    .tl_cmod0_o(cmod0_tl_req),
+    .tl_cmod0_i(cmod0_tl_rsp),
+
+    // port: tl_cmod1
+    .tl_cmod1_o(cmod1_tl_req),
+    .tl_cmod1_i(cmod1_tl_rsp),
 
 
     .scanmode_i

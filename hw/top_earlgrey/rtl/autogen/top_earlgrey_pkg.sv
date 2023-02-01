@@ -461,6 +461,26 @@ package top_earlgrey_pkg;
   parameter int unsigned TOP_EARLGREY_EDN1_SIZE_BYTES = 32'h80;
 
   /**
+   * Peripheral base address for cmod0 in top earlgrey.
+   */
+  parameter int unsigned TOP_EARLGREY_CMOD0_BASE_ADDR = 32'h41190000;
+
+  /**
+   * Peripheral size in bytes for cmod0 in top earlgrey.
+   */
+  parameter int unsigned TOP_EARLGREY_CMOD0_SIZE_BYTES = 32'h40;
+
+  /**
+   * Peripheral base address for cmod1 in top earlgrey.
+   */
+  parameter int unsigned TOP_EARLGREY_CMOD1_BASE_ADDR = 32'h411A0000;
+
+  /**
+   * Peripheral size in bytes for cmod1 in top earlgrey.
+   */
+  parameter int unsigned TOP_EARLGREY_CMOD1_SIZE_BYTES = 32'h40;
+
+  /**
    * Peripheral base address for regs device on sram_ctrl_main in top earlgrey.
    */
   parameter int unsigned TOP_EARLGREY_SRAM_CTRL_MAIN_REGS_BASE_ADDR = 32'h411C0000;
@@ -591,9 +611,11 @@ package top_earlgrey_pkg;
     TopEarlgreyAlertPeripheralEntropySrc = 35,
     TopEarlgreyAlertPeripheralEdn0 = 36,
     TopEarlgreyAlertPeripheralEdn1 = 37,
-    TopEarlgreyAlertPeripheralSramCtrlMain = 38,
-    TopEarlgreyAlertPeripheralRomCtrl = 39,
-    TopEarlgreyAlertPeripheralRvCoreIbex = 40,
+    TopEarlgreyAlertPeripheralCmod0 = 38,
+    TopEarlgreyAlertPeripheralCmod1 = 39,
+    TopEarlgreyAlertPeripheralSramCtrlMain = 40,
+    TopEarlgreyAlertPeripheralRomCtrl = 41,
+    TopEarlgreyAlertPeripheralRvCoreIbex = 42,
     TopEarlgreyAlertPeripheralCount
   } alert_peripheral_e;
 
@@ -658,12 +680,14 @@ package top_earlgrey_pkg;
     TopEarlgreyAlertIdEdn0FatalAlert = 56,
     TopEarlgreyAlertIdEdn1RecovAlert = 57,
     TopEarlgreyAlertIdEdn1FatalAlert = 58,
-    TopEarlgreyAlertIdSramCtrlMainFatalError = 59,
-    TopEarlgreyAlertIdRomCtrlFatal = 60,
-    TopEarlgreyAlertIdRvCoreIbexFatalSwErr = 61,
-    TopEarlgreyAlertIdRvCoreIbexRecovSwErr = 62,
-    TopEarlgreyAlertIdRvCoreIbexFatalHwErr = 63,
-    TopEarlgreyAlertIdRvCoreIbexRecovHwErr = 64,
+    TopEarlgreyAlertIdCmod0FatalFault = 59,
+    TopEarlgreyAlertIdCmod1FatalFault = 60,
+    TopEarlgreyAlertIdSramCtrlMainFatalError = 61,
+    TopEarlgreyAlertIdRomCtrlFatal = 62,
+    TopEarlgreyAlertIdRvCoreIbexFatalSwErr = 63,
+    TopEarlgreyAlertIdRvCoreIbexRecovSwErr = 64,
+    TopEarlgreyAlertIdRvCoreIbexFatalHwErr = 65,
+    TopEarlgreyAlertIdRvCoreIbexRecovHwErr = 66,
     TopEarlgreyAlertIdCount
   } alert_id_e;
 
@@ -934,6 +958,8 @@ package top_earlgrey_pkg;
     PeripheralAonTimerAon,
     PeripheralAst,
     PeripheralClkmgrAon,
+    PeripheralCmod0,
+    PeripheralCmod1,
     PeripheralCsrng,
     PeripheralEdn0,
     PeripheralEdn1,

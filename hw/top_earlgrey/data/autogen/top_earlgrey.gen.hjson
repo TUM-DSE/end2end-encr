@@ -6825,6 +6825,204 @@
       }
     }
     {
+      name: cmod0
+      type: cmod
+      clock_srcs:
+      {
+        clk_i: main
+      }
+      clock_group: infra
+      reset_connections:
+      {
+        rst_ni:
+        {
+          name: lc
+          domain: "0"
+        }
+      }
+      clock_connections:
+      {
+        clk_i: clkmgr_aon_clocks.clk_main_infra
+      }
+      domain:
+      [
+        "0"
+      ]
+      param_decl: {}
+      param_list: []
+      inter_signal_list:
+      [
+        {
+          name: tx
+          struct: cmod_req
+          package: cmod_pkg
+          type: uni
+          act: req
+          width: 1
+          inst_name: cmod0
+          default: ""
+          end_idx: -1
+          top_type: broadcast
+          top_signame: cmod0_tx
+          index: -1
+        }
+        {
+          name: rx
+          struct: cmod_rcv
+          package: cmod_pkg
+          type: uni
+          act: rcv
+          width: 1
+          inst_name: cmod0
+          default: ""
+          top_signame: cmod1_tx
+          index: -1
+        }
+        {
+          name: tx_rready
+          struct: logic
+          type: uni
+          act: rcv
+          width: 1
+          inst_name: cmod0
+          default: ""
+          package: ""
+          top_signame: cmod1_rx_wready
+          index: -1
+        }
+        {
+          name: rx_wready
+          struct: logic
+          type: uni
+          act: req
+          width: 1
+          inst_name: cmod0
+          default: ""
+          package: ""
+          end_idx: -1
+          top_type: broadcast
+          top_signame: cmod0_rx_wready
+          index: -1
+        }
+        {
+          name: tl
+          struct: tl
+          package: tlul_pkg
+          type: req_rsp
+          act: rsp
+          width: 1
+          inst_name: cmod0
+          default: ""
+          end_idx: -1
+          top_signame: cmod0_tl
+          index: -1
+        }
+      ]
+      base_addrs:
+      {
+        null: 0x41190000
+      }
+    }
+    {
+      name: cmod1
+      type: cmod
+      clock_srcs:
+      {
+        clk_i: main
+      }
+      clock_group: infra
+      reset_connections:
+      {
+        rst_ni:
+        {
+          name: lc
+          domain: "0"
+        }
+      }
+      clock_connections:
+      {
+        clk_i: clkmgr_aon_clocks.clk_main_infra
+      }
+      domain:
+      [
+        "0"
+      ]
+      param_decl: {}
+      param_list: []
+      inter_signal_list:
+      [
+        {
+          name: tx
+          struct: cmod_req
+          package: cmod_pkg
+          type: uni
+          act: req
+          width: 1
+          inst_name: cmod1
+          default: ""
+          end_idx: -1
+          top_type: broadcast
+          top_signame: cmod1_tx
+          index: -1
+        }
+        {
+          name: rx
+          struct: cmod_rcv
+          package: cmod_pkg
+          type: uni
+          act: rcv
+          width: 1
+          inst_name: cmod1
+          default: ""
+          top_signame: cmod0_tx
+          index: -1
+        }
+        {
+          name: tx_rready
+          struct: logic
+          type: uni
+          act: rcv
+          width: 1
+          inst_name: cmod1
+          default: ""
+          package: ""
+          top_signame: cmod0_rx_wready
+          index: -1
+        }
+        {
+          name: rx_wready
+          struct: logic
+          type: uni
+          act: req
+          width: 1
+          inst_name: cmod1
+          default: ""
+          package: ""
+          end_idx: -1
+          top_type: broadcast
+          top_signame: cmod1_rx_wready
+          index: -1
+        }
+        {
+          name: tl
+          struct: tl
+          package: tlul_pkg
+          type: req_rsp
+          act: rsp
+          width: 1
+          inst_name: cmod1
+          default: ""
+          end_idx: -1
+          top_signame: cmod1_tl
+          index: -1
+        }
+      ]
+      base_addrs:
+      {
+        null: 0x411a0000
+      }
+    }
+    {
       name: sram_ctrl_main
       type: sram_ctrl
       clock_srcs:
@@ -8198,6 +8396,22 @@
       [
         pwrmgr_aon.sw_rst_req
       ]
+      cmod0.tx:
+      [
+        cmod1.rx
+      ]
+      cmod1.tx:
+      [
+        cmod0.rx
+      ]
+      cmod0.rx_wready:
+      [
+        cmod1.tx_rready
+      ]
+      cmod1.rx_wready:
+      [
+        cmod0.tx_rready
+      ]
       pwrmgr_aon.wakeups:
       [
         sysrst_ctrl_aon.wkup_req
@@ -8319,6 +8533,14 @@
       sram_ctrl_main.ram_tl:
       [
         main.tl_sram_ctrl_main__ram
+      ]
+      cmod0.tl:
+      [
+        main.tl_cmod0
+      ]
+      cmod1.tl:
+      [
+        main.tl_cmod1
       ]
       uart0.tl:
       [
@@ -8584,6 +8806,8 @@
           kmac
           sram_ctrl_main.regs
           rv_core_ibex.cfg
+          cmod0
+          cmod1
         ]
         rv_dm.sba:
         [
@@ -8611,6 +8835,8 @@
           kmac
           sram_ctrl_main.regs
           rv_core_ibex.cfg
+          cmod0
+          cmod1
         ]
       }
       nodes:
@@ -9109,6 +9335,44 @@
           stub: false
           req_fifo_pass: true
         }
+        {
+          name: cmod0
+          type: device
+          clock: clk_main_i
+          reset: rst_main_ni
+          req_fifo_pass: false
+          rsp_fifo_pass: false
+          inst_type: cmod
+          addr_range:
+          [
+            {
+              base_addr: 0x41190000
+              size_byte: 0x40
+            }
+          ]
+          xbar: false
+          stub: false
+          pipeline: true
+        }
+        {
+          name: cmod1
+          type: device
+          clock: clk_main_i
+          reset: rst_main_ni
+          req_fifo_pass: false
+          rsp_fifo_pass: false
+          inst_type: cmod
+          addr_range:
+          [
+            {
+              base_addr: 0x411a0000
+              size_byte: 0x40
+            }
+          ]
+          xbar: false
+          stub: false
+          pipeline: true
+        }
       ]
       clock: clk_main_i
       type: xbar
@@ -9440,6 +9704,30 @@
           inst_name: main
           default: ""
           top_signame: sram_ctrl_main_ram_tl
+          index: -1
+        }
+        {
+          name: tl_cmod0
+          struct: tl
+          package: tlul_pkg
+          type: req_rsp
+          act: req
+          width: 1
+          inst_name: main
+          default: ""
+          top_signame: cmod0_tl
+          index: -1
+        }
+        {
+          name: tl_cmod1
+          struct: tl
+          package: tlul_pkg
+          type: req_rsp
+          act: req
+          width: 1
+          inst_name: main
+          default: ""
+          top_signame: cmod1_tl
           index: -1
         }
       ]
@@ -12831,6 +13119,8 @@
     entropy_src
     edn0
     edn1
+    cmod0
+    cmod1
   ]
   interrupt:
   [
@@ -13752,6 +14042,54 @@
       type: interrupt
       module_name: edn1
     }
+    {
+      name: cmod0_tx_watermark
+      width: 1
+      type: interrupt
+      module_name: cmod0
+    }
+    {
+      name: cmod0_rx_watermark
+      width: 1
+      type: interrupt
+      module_name: cmod0
+    }
+    {
+      name: cmod0_tx_empty
+      width: 1
+      type: interrupt
+      module_name: cmod0
+    }
+    {
+      name: cmod0_rx_overflow
+      width: 1
+      type: interrupt
+      module_name: cmod0
+    }
+    {
+      name: cmod1_tx_watermark
+      width: 1
+      type: interrupt
+      module_name: cmod1
+    }
+    {
+      name: cmod1_rx_watermark
+      width: 1
+      type: interrupt
+      module_name: cmod1
+    }
+    {
+      name: cmod1_tx_empty
+      width: 1
+      type: interrupt
+      module_name: cmod1
+    }
+    {
+      name: cmod1_rx_overflow
+      width: 1
+      type: interrupt
+      module_name: cmod1
+    }
   ]
   alert_module:
   [
@@ -13793,6 +14131,8 @@
     entropy_src
     edn0
     edn1
+    cmod0
+    cmod1
     sram_ctrl_main
     rom_ctrl
     rv_core_ibex
@@ -14329,6 +14669,24 @@
       module_name: edn1
       lpg_name: secure_lc_0
       lpg_idx: 19
+    }
+    {
+      name: cmod0_fatal_fault
+      width: 1
+      type: alert
+      async: "1"
+      module_name: cmod0
+      lpg_name: infra_lc_0
+      lpg_idx: 17
+    }
+    {
+      name: cmod1_fatal_fault
+      width: 1
+      type: alert
+      async: "1"
+      module_name: cmod1
+      lpg_name: infra_lc_0
+      lpg_idx: 17
     }
     {
       name: sram_ctrl_main_fatal_error
@@ -18709,6 +19067,136 @@
         index: -1
       }
       {
+        name: tx
+        struct: cmod_req
+        package: cmod_pkg
+        type: uni
+        act: req
+        width: 1
+        inst_name: cmod0
+        default: ""
+        end_idx: -1
+        top_type: broadcast
+        top_signame: cmod0_tx
+        index: -1
+      }
+      {
+        name: rx
+        struct: cmod_rcv
+        package: cmod_pkg
+        type: uni
+        act: rcv
+        width: 1
+        inst_name: cmod0
+        default: ""
+        top_signame: cmod1_tx
+        index: -1
+      }
+      {
+        name: tx_rready
+        struct: logic
+        type: uni
+        act: rcv
+        width: 1
+        inst_name: cmod0
+        default: ""
+        package: ""
+        top_signame: cmod1_rx_wready
+        index: -1
+      }
+      {
+        name: rx_wready
+        struct: logic
+        type: uni
+        act: req
+        width: 1
+        inst_name: cmod0
+        default: ""
+        package: ""
+        end_idx: -1
+        top_type: broadcast
+        top_signame: cmod0_rx_wready
+        index: -1
+      }
+      {
+        name: tl
+        struct: tl
+        package: tlul_pkg
+        type: req_rsp
+        act: rsp
+        width: 1
+        inst_name: cmod0
+        default: ""
+        end_idx: -1
+        top_signame: cmod0_tl
+        index: -1
+      }
+      {
+        name: tx
+        struct: cmod_req
+        package: cmod_pkg
+        type: uni
+        act: req
+        width: 1
+        inst_name: cmod1
+        default: ""
+        end_idx: -1
+        top_type: broadcast
+        top_signame: cmod1_tx
+        index: -1
+      }
+      {
+        name: rx
+        struct: cmod_rcv
+        package: cmod_pkg
+        type: uni
+        act: rcv
+        width: 1
+        inst_name: cmod1
+        default: ""
+        top_signame: cmod0_tx
+        index: -1
+      }
+      {
+        name: tx_rready
+        struct: logic
+        type: uni
+        act: rcv
+        width: 1
+        inst_name: cmod1
+        default: ""
+        package: ""
+        top_signame: cmod0_rx_wready
+        index: -1
+      }
+      {
+        name: rx_wready
+        struct: logic
+        type: uni
+        act: req
+        width: 1
+        inst_name: cmod1
+        default: ""
+        package: ""
+        end_idx: -1
+        top_type: broadcast
+        top_signame: cmod1_rx_wready
+        index: -1
+      }
+      {
+        name: tl
+        struct: tl
+        package: tlul_pkg
+        type: req_rsp
+        act: rsp
+        width: 1
+        inst_name: cmod1
+        default: ""
+        end_idx: -1
+        top_signame: cmod1_tl
+        index: -1
+      }
+      {
         name: sram_otp_key
         struct: sram_otp_key
         package: otp_ctrl_pkg
@@ -19454,6 +19942,30 @@
         inst_name: main
         default: ""
         top_signame: sram_ctrl_main_ram_tl
+        index: -1
+      }
+      {
+        name: tl_cmod0
+        struct: tl
+        package: tlul_pkg
+        type: req_rsp
+        act: req
+        width: 1
+        inst_name: main
+        default: ""
+        top_signame: cmod0_tl
+        index: -1
+      }
+      {
+        name: tl_cmod1
+        struct: tl
+        package: tlul_pkg
+        type: req_rsp
+        act: req
+        width: 1
+        inst_name: main
+        default: ""
+        top_signame: cmod1_tl
         index: -1
       }
       {
@@ -21541,6 +22053,50 @@
         default: prim_mubi_pkg::MUBI4_DEFAULT
       }
       {
+        package: cmod_pkg
+        struct: cmod_req
+        signame: cmod0_tx
+        width: 1
+        type: uni
+        end_idx: -1
+        act: req
+        suffix: ""
+        default: cmod_pkg::CMOD_REQ_DEFAULT
+      }
+      {
+        package: cmod_pkg
+        struct: cmod_req
+        signame: cmod1_tx
+        width: 1
+        type: uni
+        end_idx: -1
+        act: req
+        suffix: ""
+        default: cmod_pkg::CMOD_REQ_DEFAULT
+      }
+      {
+        package: ""
+        struct: logic
+        signame: cmod0_rx_wready
+        width: 1
+        type: uni
+        end_idx: -1
+        act: req
+        suffix: ""
+        default: "'0"
+      }
+      {
+        package: ""
+        struct: logic
+        signame: cmod1_rx_wready
+        width: 1
+        type: uni
+        end_idx: -1
+        act: req
+        suffix: ""
+        default: "'0"
+      }
+      {
         package: ""
         struct: logic
         signame: pwrmgr_aon_wakeups
@@ -22149,6 +22705,50 @@
         package: tlul_pkg
         struct: tl_d2h
         signame: sram_ctrl_main_ram_tl_rsp
+        width: 1
+        type: req_rsp
+        end_idx: -1
+        act: rsp
+        suffix: rsp
+        default: ""
+      }
+      {
+        package: tlul_pkg
+        struct: tl_h2d
+        signame: cmod0_tl_req
+        width: 1
+        type: req_rsp
+        end_idx: -1
+        act: rsp
+        suffix: req
+        default: tlul_pkg::TL_H2D_DEFAULT
+      }
+      {
+        package: tlul_pkg
+        struct: tl_d2h
+        signame: cmod0_tl_rsp
+        width: 1
+        type: req_rsp
+        end_idx: -1
+        act: rsp
+        suffix: rsp
+        default: ""
+      }
+      {
+        package: tlul_pkg
+        struct: tl_h2d
+        signame: cmod1_tl_req
+        width: 1
+        type: req_rsp
+        end_idx: -1
+        act: rsp
+        suffix: req
+        default: tlul_pkg::TL_H2D_DEFAULT
+      }
+      {
+        package: tlul_pkg
+        struct: tl_d2h
+        signame: cmod1_tl_rsp
         width: 1
         type: req_rsp
         end_idx: -1

@@ -93,6 +93,8 @@
       kmac
       sram_ctrl_main.regs
       rv_core_ibex.cfg
+      cmod0
+      cmod1
     ]
     rv_dm.sba:
     [
@@ -120,6 +122,8 @@
       kmac
       sram_ctrl_main.regs
       rv_core_ibex.cfg
+      cmod0
+      cmod1
     ]
   }
   nodes:
@@ -617,6 +621,44 @@
       xbar: false
       stub: false
       req_fifo_pass: true
+    }
+    {
+      name: cmod0
+      type: device
+      clock: clk_main_i
+      reset: rst_main_ni
+      req_fifo_pass: false
+      rsp_fifo_pass: false
+      inst_type: cmod
+      addr_range:
+      [
+        {
+          base_addr: 0x41190000
+          size_byte: 0x40
+        }
+      ]
+      xbar: false
+      stub: false
+      pipeline: true
+    }
+    {
+      name: cmod1
+      type: device
+      clock: clk_main_i
+      reset: rst_main_ni
+      req_fifo_pass: false
+      rsp_fifo_pass: false
+      inst_type: cmod
+      addr_range:
+      [
+        {
+          base_addr: 0x411a0000
+          size_byte: 0x40
+        }
+      ]
+      xbar: false
+      stub: false
+      pipeline: true
     }
   ]
   clock: clk_main_i

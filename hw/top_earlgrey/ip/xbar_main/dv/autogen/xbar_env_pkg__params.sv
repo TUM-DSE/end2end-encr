@@ -79,6 +79,12 @@ tl_device_t xbar_devices[$] = '{
     }},
     '{"sram_ctrl_main__ram", '{
         '{32'h10000000, 32'h1001ffff}
+    }},
+    '{"cmod0", '{
+        '{32'h41190000, 32'h4119003f}
+    }},
+    '{"cmod1", '{
+        '{32'h411a0000, 32'h411a003f}
 }}};
 
   // List of Xbar hosts
@@ -113,7 +119,9 @@ tl_host_t xbar_hosts[$] = '{
         "keymgr",
         "kmac",
         "sram_ctrl_main__regs",
-        "rv_core_ibex__cfg"}}
+        "rv_core_ibex__cfg",
+        "cmod0",
+        "cmod1"}}
     ,
     '{"rv_dm__sba", 2, '{
         "rom_ctrl__rom",
@@ -139,5 +147,7 @@ tl_host_t xbar_hosts[$] = '{
         "keymgr",
         "kmac",
         "sram_ctrl_main__regs",
-        "rv_core_ibex__cfg"}}
+        "rv_core_ibex__cfg",
+        "cmod0",
+        "cmod1"}}
 };

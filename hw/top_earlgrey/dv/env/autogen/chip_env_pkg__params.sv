@@ -64,6 +64,8 @@ parameter string LIST_OF_ALERTS[] = {
   "edn0_fatal_alert",
   "edn1_recov_alert",
   "edn1_fatal_alert",
+  "cmod0_fatal_fault",
+  "cmod1_fatal_fault",
   "sram_ctrl_main_fatal_error",
   "rom_ctrl_fatal",
   "rv_core_ibex_fatal_sw_err",
@@ -72,4 +74,4 @@ parameter string LIST_OF_ALERTS[] = {
   "rv_core_ibex_recov_hw_err"
 };
 
-parameter uint NUM_ALERTS = 65;
+parameter uint NUM_ALERTS = 67;

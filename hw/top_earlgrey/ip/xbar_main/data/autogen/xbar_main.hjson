@@ -175,5 +175,17 @@
       act:    "req"
       package: "tlul_pkg"
     }
+    { struct: "tl"
+      type:   "req_rsp"
+      name:   "tl_cmod0"
+      act:    "req"
+      package: "tlul_pkg"
+    }
+    { struct: "tl"
+      type:   "req_rsp"
+      name:   "tl_cmod1"
+      act:    "req"
+      package: "tlul_pkg"
+    }
   ]
 }

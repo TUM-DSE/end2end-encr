@@ -836,6 +836,42 @@ extern "C" {
 #define TOP_EARLGREY_EDN1_SIZE_BYTES 0x80u
 
 /**
+ * Peripheral base address for cmod0 in top earlgrey.
+ *
+ * This should be used with #mmio_region_from_addr to access the memory-mapped
+ * registers associated with the peripheral (usually via a DIF).
+ */
+#define TOP_EARLGREY_CMOD0_BASE_ADDR 0x41190000u
+
+/**
+ * Peripheral size for cmod0 in top earlgrey.
+ *
+ * This is the size (in bytes) of the peripheral's reserved memory area. All
+ * memory-mapped registers associated with this peripheral should have an
+ * address between #TOP_EARLGREY_CMOD0_BASE_ADDR and
+ * `TOP_EARLGREY_CMOD0_BASE_ADDR + TOP_EARLGREY_CMOD0_SIZE_BYTES`.
+ */
+#define TOP_EARLGREY_CMOD0_SIZE_BYTES 0x40u
+
+/**
+ * Peripheral base address for cmod1 in top earlgrey.
+ *
+ * This should be used with #mmio_region_from_addr to access the memory-mapped
+ * registers associated with the peripheral (usually via a DIF).
+ */
+#define TOP_EARLGREY_CMOD1_BASE_ADDR 0x411A0000u
+
+/**
+ * Peripheral size for cmod1 in top earlgrey.
+ *
+ * This is the size (in bytes) of the peripheral's reserved memory area. All
+ * memory-mapped registers associated with this peripheral should have an
+ * address between #TOP_EARLGREY_CMOD1_BASE_ADDR and
+ * `TOP_EARLGREY_CMOD1_BASE_ADDR + TOP_EARLGREY_CMOD1_SIZE_BYTES`.
+ */
+#define TOP_EARLGREY_CMOD1_SIZE_BYTES 0x40u
+
+/**
  * Peripheral base address for regs device on sram_ctrl_main in top earlgrey.
  *
  * This should be used with #mmio_region_from_addr to access the memory-mapped
@@ -1005,7 +1041,9 @@ typedef enum top_earlgrey_plic_peripheral {
   kTopEarlgreyPlicPeripheralEntropySrc = 28, /**< entropy_src */
   kTopEarlgreyPlicPeripheralEdn0 = 29, /**< edn0 */
   kTopEarlgreyPlicPeripheralEdn1 = 30, /**< edn1 */
-  kTopEarlgreyPlicPeripheralLast = 30, /**< \internal Final PLIC peripheral */
+  kTopEarlgreyPlicPeripheralCmod0 = 31, /**< cmod0 */
+  kTopEarlgreyPlicPeripheralCmod1 = 32, /**< cmod1 */
+  kTopEarlgreyPlicPeripheralLast = 32, /**< \internal Final PLIC peripheral */
 } top_earlgrey_plic_peripheral_t;
 
 /**
@@ -1200,7 +1238,15 @@ typedef enum top_earlgrey_plic_irq_id {
   kTopEarlgreyPlicIrqIdEdn0EdnFatalErr = 182, /**< edn0_edn_fatal_err */
   kTopEarlgreyPlicIrqIdEdn1EdnCmdReqDone = 183, /**< edn1_edn_cmd_req_done */
   kTopEarlgreyPlicIrqIdEdn1EdnFatalErr = 184, /**< edn1_edn_fatal_err */
-  kTopEarlgreyPlicIrqIdLast = 184, /**< \internal The Last Valid Interrupt ID. */
+  kTopEarlgreyPlicIrqIdCmod0TxWatermark = 185, /**< cmod0_tx_watermark */
+  kTopEarlgreyPlicIrqIdCmod0RxWatermark = 186, /**< cmod0_rx_watermark */
+  kTopEarlgreyPlicIrqIdCmod0TxEmpty = 187, /**< cmod0_tx_empty */
+  kTopEarlgreyPlicIrqIdCmod0RxOverflow = 188, /**< cmod0_rx_overflow */
+  kTopEarlgreyPlicIrqIdCmod1TxWatermark = 189, /**< cmod1_tx_watermark */
+  kTopEarlgreyPlicIrqIdCmod1RxWatermark = 190, /**< cmod1_rx_watermark */
+  kTopEarlgreyPlicIrqIdCmod1TxEmpty = 191, /**< cmod1_tx_empty */
+  kTopEarlgreyPlicIrqIdCmod1RxOverflow = 192, /**< cmod1_rx_overflow */
+  kTopEarlgreyPlicIrqIdLast = 192, /**< \internal The Last Valid Interrupt ID. */
 } top_earlgrey_plic_irq_id_t;
 
 /**
@@ -1210,7 +1256,7 @@ typedef enum top_earlgrey_plic_irq_id {
  * `top_earlgrey_plic_peripheral_t`.
  */
 extern const top_earlgrey_plic_peripheral_t
-    top_earlgrey_plic_interrupt_for_peripheral[185];
+    top_earlgrey_plic_interrupt_for_peripheral[193];
 
 /**
  * PLIC Interrupt Target.
@@ -1268,10 +1314,12 @@ typedef enum top_earlgrey_alert_peripheral {
   kTopEarlgreyAlertPeripheralEntropySrc = 35, /**< entropy_src */
   kTopEarlgreyAlertPeripheralEdn0 = 36, /**< edn0 */
   kTopEarlgreyAlertPeripheralEdn1 = 37, /**< edn1 */
-  kTopEarlgreyAlertPeripheralSramCtrlMain = 38, /**< sram_ctrl_main */
-  kTopEarlgreyAlertPeripheralRomCtrl = 39, /**< rom_ctrl */
-  kTopEarlgreyAlertPeripheralRvCoreIbex = 40, /**< rv_core_ibex */
-  kTopEarlgreyAlertPeripheralLast = 40, /**< \internal Final Alert peripheral */
+  kTopEarlgreyAlertPeripheralCmod0 = 38, /**< cmod0 */
+  kTopEarlgreyAlertPeripheralCmod1 = 39, /**< cmod1 */
+  kTopEarlgreyAlertPeripheralSramCtrlMain = 40, /**< sram_ctrl_main */
+  kTopEarlgreyAlertPeripheralRomCtrl = 41, /**< rom_ctrl */
+  kTopEarlgreyAlertPeripheralRvCoreIbex = 42, /**< rv_core_ibex */
+  kTopEarlgreyAlertPeripheralLast = 42, /**< \internal Final Alert peripheral */
 } top_earlgrey_alert_peripheral_t;
 
 /**
@@ -1340,13 +1388,15 @@ typedef enum top_earlgrey_alert_id {
   kTopEarlgreyAlertIdEdn0FatalAlert = 56, /**< edn0_fatal_alert */
   kTopEarlgreyAlertIdEdn1RecovAlert = 57, /**< edn1_recov_alert */
   kTopEarlgreyAlertIdEdn1FatalAlert = 58, /**< edn1_fatal_alert */
-  kTopEarlgreyAlertIdSramCtrlMainFatalError = 59, /**< sram_ctrl_main_fatal_error */
-  kTopEarlgreyAlertIdRomCtrlFatal = 60, /**< rom_ctrl_fatal */
-  kTopEarlgreyAlertIdRvCoreIbexFatalSwErr = 61, /**< rv_core_ibex_fatal_sw_err */
-  kTopEarlgreyAlertIdRvCoreIbexRecovSwErr = 62, /**< rv_core_ibex_recov_sw_err */
-  kTopEarlgreyAlertIdRvCoreIbexFatalHwErr = 63, /**< rv_core_ibex_fatal_hw_err */
-  kTopEarlgreyAlertIdRvCoreIbexRecovHwErr = 64, /**< rv_core_ibex_recov_hw_err */
-  kTopEarlgreyAlertIdLast = 64, /**< \internal The Last Valid Alert ID. */
+  kTopEarlgreyAlertIdCmod0FatalFault = 59, /**< cmod0_fatal_fault */
+  kTopEarlgreyAlertIdCmod1FatalFault = 60, /**< cmod1_fatal_fault */
+  kTopEarlgreyAlertIdSramCtrlMainFatalError = 61, /**< sram_ctrl_main_fatal_error */
+  kTopEarlgreyAlertIdRomCtrlFatal = 62, /**< rom_ctrl_fatal */
+  kTopEarlgreyAlertIdRvCoreIbexFatalSwErr = 63, /**< rv_core_ibex_fatal_sw_err */
+  kTopEarlgreyAlertIdRvCoreIbexRecovSwErr = 64, /**< rv_core_ibex_recov_sw_err */
+  kTopEarlgreyAlertIdRvCoreIbexFatalHwErr = 65, /**< rv_core_ibex_fatal_hw_err */
+  kTopEarlgreyAlertIdRvCoreIbexRecovHwErr = 66, /**< rv_core_ibex_recov_hw_err */
+  kTopEarlgreyAlertIdLast = 66, /**< \internal The Last Valid Alert ID. */
 } top_earlgrey_alert_id_t;
 
 /**
@@ -1356,7 +1406,7 @@ typedef enum top_earlgrey_alert_id {
  * `top_earlgrey_alert_peripheral_t`.
  */
 extern const top_earlgrey_alert_peripheral_t
-    top_earlgrey_alert_for_peripheral[65];
+    top_earlgrey_alert_for_peripheral[67];
 
 #define PINMUX_MIO_PERIPH_INSEL_IDX_OFFSET 2
 
