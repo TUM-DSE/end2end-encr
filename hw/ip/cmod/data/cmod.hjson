@@ -1,0 +1,213 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{ name: "cmod",
+  clocking: [{clock: "clk_i", reset: "rst_ni"}],
+  bus_interfaces: [
+    { protocol: "tlul", direction: "device" }
+  ],
+  interrupt_list: [
+    { name: "tx_watermark"
+      desc: "Raised if the transmit FIFO is past the high-water mark."}
+    { name: "rx_watermark"
+      desc: "Raised if the receive FIFO is past the high-water mark."}
+    { name: "tx_empty"
+      desc: "Raised if the transmit FIFO has emptied and no transmit is ongoing."}
+  ],
+  alert_list: [
+    { name: "fatal_fault",
+      desc: '''
+      This fatal alert is triggered when a fatal TL-UL bus integrity fault is detected.
+      '''
+    }
+  ],
+  countermeasures: [
+    { name: "BUS.INTEGRITY",
+      desc: "End-to-end bus integrity scheme."
+    }
+  ],
+  param_list: [
+    { name:    "NumRegsData",
+      type:    "int",
+      default: "4",
+      desc:    "Number of registers for multiregister WDATA and RDATA.",
+      local:   "true"
+    }
+  ],
+  regwidth: "32",
+  registers: [
+    { name:     "CTRL",
+      desc:     "CMOD control register",
+      swaccess: "rw",
+      hwaccess: "hrw",
+      fields: [
+        {
+          bits: "0",
+          name: "TXTRIGGER",
+          desc: "Starts the transmission of a new message."
+        }
+        { bits: "1",
+          name: "TXEND",
+          desc: "Marks that the last data block of a message was written to the cmod.WDATA registers."
+        }
+        { bits: "2",
+          name: "RXCONFIRM",
+          desc: "Confirms that the end of a message was noticed and allows the reception of a new message."
+        }
+        { bits: "4:3",
+          name: "TXILVL",
+          desc: '''Trigger level for tx_watermark interrupt. If the FIFO depth is smaller to
+                the setting, it raises a tx_watermark interrupt.
+                ''',
+          enum: [
+            { value: "0",
+              name:  "txlvl2",
+              desc:  "2 data blocks"
+            },
+            { value: "1",
+              name:  "txlvl3",
+              desc:  "3 data blocks"
+            },
+            { value: "2",
+              name:  "txlvl4",
+              desc:  "4 data blocks"
+            }
+          ]
+        }
+        { bits: "6:5",
+          name: "RXILVL",
+          desc: '''Trigger level for rx_watermark interrupt. If the FIFO depth is greater or equal to
+                the setting, it raises a rx_watermark interrupt.
+                ''',
+          enum: [
+            { value: "0",
+              name:  "rxlvl1",
+              desc:  "1 data block"
+            },
+            { value: "1",
+              name:  "rxlvl2",
+              desc:  "2 data blocks"
+            },
+            { value: "2",
+              name:  "rxlvl3",
+              desc:  "3 data blocks"
+            }
+          ]
+        }
+      ]
+    },
+    { name:     "STATUS",
+      desc:     "CMOD status register",
+      swaccess: "ro",
+      hwaccess: "hrw",
+      hwext:    "true",
+      hwre:     "true",
+      fields: [
+        { bits:   "0",
+          name:   "TX",
+          desc:   '''
+            The CMOD unit is idle (0) or busy(1).
+            This bit is `0` if no message is currently transmitted.
+            This bit is `1` one of the following is the case:
+            i) The transmission has started (TXTRIGGER set), and the last data block of  the message
+            was not yet received (TXEND was not set yet).,
+            ii) The last data block of a message was received but still needs to leave the outgoing buffer.
+          '''
+        }
+        { bits: "1",
+          name: "TXFULL",
+          desc: "The buffer for outgoing data is full."
+        }
+        { bits: "2",
+          name: "RXFULL",
+          desc: "The buffer for incoming data is full."
+        }
+        { bits: "3",
+          name: "TXEMPTY",
+          desc: "The buffer for outgoing data is empty."
+        }
+        { bits: "4",
+          name: "TXINPUT_READY",
+          desc: '''
+            The CMOD unit is ready (1) or not ready (0) to receive new input via the cmod.WDATA registers.
+            If this bit is `0`, it means that either the transmission of a new message was not started yet
+            or that the buffer for outgoing data is full.
+          '''
+        }
+        { bits: "5",
+          name: "RXVALID",
+          desc: "The CMOD unit has no valid output (0) or valid output data."
+        }
+        { bits: "8:6",
+          name: "TXLVL",
+          desc: "The current fill level of the buffer for outgoing data."
+        },
+        { bits: "11:9",
+          name: "RXLVL",
+          desc: "The current fill level of the buffer for incoming data."
+        }
+        {
+          bits: "12",
+          name: "RXLAST",
+          desc: '''
+            If set, it means that the last data block of a message was already read.
+            To allow the reception of a new message, the cmod.RXCONFIRM bit needs to be set.
+          '''
+        }
+      ]
+    },
+    { multireg: {
+      name:     "WDATA",
+      resval:   "0",
+      desc:     "Data to be transmitted. If the cmod.TXINPUT_READY bit is unset the data written is ignored.",
+      count:    "NumRegsData",
+      cname:    "WDATA",
+      swaccess: "wo",
+      hwaccess: "hrw",
+      hwqe:     "true",
+      fields: [
+        { bits: "31:0" }
+      ]
+      }
+    },
+    { multireg: {
+      name:     "RDATA",
+      resval:   "0",
+      desc:     "If cmod.RXVALID is `1`, data that was received.",
+      count:    "NumRegsData",
+      cname:    "RXDATA",
+      swaccess: "ro",
+      hwaccess: "hrw",
+      hwext:    "true",
+      hwre:     "true",
+      fields: [
+        { bits: "31:0" }
+      ]
+      }
+    }
+  ],
+  inter_signal_list: [
+    { name:     "tx",
+      struct:   "cmod_req",
+      package:  "cmod_pkg",
+      type:     "uni",
+      act:      "req"
+    }
+    { name:     "rx",
+      struct:   "cmod_rcv",
+      package:  "cmod_pkg",
+      type:     "uni",
+      act:      "rcv"
+    }
+    { name:   "tx_rready",
+      struct: "logic",
+      type:   "uni",
+      act:    "rcv"
+    }
+    { name:   "rx_wready",
+      struct: "logic",
+      type:   "uni",
+      act:    "req"
+    }
+  ],
+}
