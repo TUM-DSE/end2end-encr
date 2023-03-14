@@ -698,29 +698,16 @@ opentitan_functest(
 )
 
 opentitan_functest(
-    name = "cmod_encrypt_test",
-    srcs = ["cmod_encrypt_test.c"],
-    deps = [
-        "//hw/top_earlgrey/sw/autogen:top_earlgrey",
-        "//hw/ip/aes:model",
-        "//sw/device/lib/base:mmio",
-        "//sw/device/lib/dif:aes",
-        "//sw/device/lib/dif:cmod",
-        "//sw/device/lib/runtime:log",
-        "//sw/device/lib/testing:aes_testutils",
-        "//sw/device/lib/testing:cmod_testutils",
-        "//sw/device/lib/testing/test_framework:check",
-        "//sw/device/lib/testing/test_framework:ottf_main"
-    ]
-)
-
-opentitan_functest(
     name = "cmod_perftest",
     srcs = ["cmod_perftest.c"],
     deps = [
+        "//hw/ip/aes:model",
+        "//hw/ip/aes/data:aes_regs",
         "//hw/ip/cmod/data:cmod_regs",
         "//hw/top_earlgrey/sw/autogen:top_earlgrey",
+        "//sw/device/lib/base:bitfield",
         "//sw/device/lib/base:mmio",
+        "//sw/device/lib/dif:aes",
         "//sw/device/lib/dif:cmod",
         "//sw/device/lib/runtime:ibex",
         "//sw/device/lib/runtime:log",
@@ -730,14 +717,13 @@ opentitan_functest(
 )
 
 opentitan_functest(
-    name = "cmod_test",
-    srcs = ["cmod_test.c"],
+    name = "cmod_functionality_test",
+    srcs = ["cmod_functionality_test.c"],
     deps = [
         "//hw/top_earlgrey/sw/autogen:top_earlgrey",
         "//sw/device/lib/base:mmio",
         "//sw/device/lib/dif:cmod",
-        "//sw/device/lib/runtime:log",
-        "//sw/device/lib/testing:cmod_testutils",
+        "//sw/device/lib/runtime:ibex",
         "//sw/device/lib/testing/test_framework:check",
         "//sw/device/lib/testing/test_framework:ottf_main"
     ]

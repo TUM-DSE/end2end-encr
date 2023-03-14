@@ -1241,12 +1241,10 @@ typedef enum top_earlgrey_plic_irq_id {
   kTopEarlgreyPlicIrqIdCmod0TxWatermark = 185, /**< cmod0_tx_watermark */
   kTopEarlgreyPlicIrqIdCmod0RxWatermark = 186, /**< cmod0_rx_watermark */
   kTopEarlgreyPlicIrqIdCmod0TxEmpty = 187, /**< cmod0_tx_empty */
-  kTopEarlgreyPlicIrqIdCmod0RxOverflow = 188, /**< cmod0_rx_overflow */
-  kTopEarlgreyPlicIrqIdCmod1TxWatermark = 189, /**< cmod1_tx_watermark */
-  kTopEarlgreyPlicIrqIdCmod1RxWatermark = 190, /**< cmod1_rx_watermark */
-  kTopEarlgreyPlicIrqIdCmod1TxEmpty = 191, /**< cmod1_tx_empty */
-  kTopEarlgreyPlicIrqIdCmod1RxOverflow = 192, /**< cmod1_rx_overflow */
-  kTopEarlgreyPlicIrqIdLast = 192, /**< \internal The Last Valid Interrupt ID. */
+  kTopEarlgreyPlicIrqIdCmod1TxWatermark = 188, /**< cmod1_tx_watermark */
+  kTopEarlgreyPlicIrqIdCmod1RxWatermark = 189, /**< cmod1_rx_watermark */
+  kTopEarlgreyPlicIrqIdCmod1TxEmpty = 190, /**< cmod1_tx_empty */
+  kTopEarlgreyPlicIrqIdLast = 190, /**< \internal The Last Valid Interrupt ID. */
 } top_earlgrey_plic_irq_id_t;
 
 /**
@@ -1256,7 +1254,7 @@ typedef enum top_earlgrey_plic_irq_id {
  * `top_earlgrey_plic_peripheral_t`.
  */
 extern const top_earlgrey_plic_peripheral_t
-    top_earlgrey_plic_interrupt_for_peripheral[193];
+    top_earlgrey_plic_interrupt_for_peripheral[191];
 
 /**
  * PLIC Interrupt Target.

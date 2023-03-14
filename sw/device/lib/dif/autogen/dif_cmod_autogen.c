@@ -61,9 +61,6 @@ static bool cmod_get_irq_bit_index(dif_cmod_irq_t irq,
     case kDifCmodIrqTxEmpty:
       *index_out = CMOD_INTR_COMMON_TX_EMPTY_BIT;
       break;
-    case kDifCmodIrqRxOverflow:
-      *index_out = CMOD_INTR_COMMON_RX_OVERFLOW_BIT;
-      break;
     default:
       return false;
   }
@@ -75,13 +72,12 @@ static dif_irq_type_t irq_types[] = {
     kDifIrqTypeEvent,
     kDifIrqTypeEvent,
     kDifIrqTypeEvent,
-    kDifIrqTypeEvent,
 };
 
 OT_WARN_UNUSED_RESULT
 dif_result_t dif_cmod_irq_get_type(const dif_cmod_t *cmod, dif_cmod_irq_t irq,
                                    dif_irq_type_t *type) {
-  if (cmod == NULL || type == NULL || irq == kDifCmodIrqRxOverflow + 1) {
+  if (cmod == NULL || type == NULL || irq == kDifCmodIrqTxEmpty + 1) {
     return kDifBadArg;
   }
 

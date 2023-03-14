@@ -11,6 +11,7 @@
 #include "sw/device/lib/dif/dif_alert_handler.h"
 #include "sw/device/lib/dif/dif_aon_timer.h"
 #include "sw/device/lib/dif/dif_base.h"
+#include "sw/device/lib/dif/dif_cmod.h"
 #include "sw/device/lib/dif/dif_csrng.h"
 #include "sw/device/lib/dif/dif_edn.h"
 #include "sw/device/lib/dif/dif_entropy_src.h"
@@ -160,6 +161,44 @@ void isr_testutils_aon_timer_isr(
   CHECK_DIF_OK(dif_aon_timer_irq_get_type(aon_timer_ctx.aon_timer, irq, &type));
   if (type == kDifIrqTypeEvent) {
     CHECK_DIF_OK(dif_aon_timer_irq_acknowledge(aon_timer_ctx.aon_timer, irq));
+  }
+
+  // Complete the IRQ at the PLIC.
+  CHECK_DIF_OK(dif_rv_plic_irq_complete(plic_ctx.rv_plic, plic_ctx.hart_id,
+                                        plic_irq_id));
+}
+
+void isr_testutils_cmod_isr(plic_isr_ctx_t plic_ctx, cmod_isr_ctx_t cmod_ctx,
+                            top_earlgrey_plic_peripheral_t *peripheral_serviced,
+                            dif_cmod_irq_t *irq_serviced) {
+  // Claim the IRQ at the PLIC.
+  dif_rv_plic_irq_id_t plic_irq_id;
+  CHECK_DIF_OK(
+      dif_rv_plic_irq_claim(plic_ctx.rv_plic, plic_ctx.hart_id, &plic_irq_id));
+
+  // Get the peripheral the IRQ belongs to.
+  *peripheral_serviced = (top_earlgrey_plic_peripheral_t)
+      top_earlgrey_plic_interrupt_for_peripheral[plic_irq_id];
+
+  // Get the IRQ that was fired from the PLIC IRQ ID.
+  dif_cmod_irq_t irq =
+      (dif_cmod_irq_t)(plic_irq_id - cmod_ctx.plic_cmod_start_irq_id);
+  *irq_serviced = irq;
+
+  // Check if it is supposed to be the only IRQ fired.
+  if (cmod_ctx.is_only_irq) {
+    dif_cmod_irq_state_snapshot_t snapshot;
+    CHECK_DIF_OK(dif_cmod_irq_get_state(cmod_ctx.cmod, &snapshot));
+    CHECK(snapshot == (dif_cmod_irq_state_snapshot_t)(1 << irq),
+          "Only cmod IRQ %d expected to fire. Actual IRQ state = %x", irq,
+          snapshot);
+  }
+
+  // Acknowledge the IRQ at the peripheral if IRQ is of the event type.
+  dif_irq_type_t type;
+  CHECK_DIF_OK(dif_cmod_irq_get_type(cmod_ctx.cmod, irq, &type));
+  if (type == kDifIrqTypeEvent) {
+    CHECK_DIF_OK(dif_cmod_irq_acknowledge(cmod_ctx.cmod, irq));
   }
 
   // Complete the IRQ at the PLIC.

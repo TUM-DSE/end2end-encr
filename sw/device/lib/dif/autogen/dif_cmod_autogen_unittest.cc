@@ -73,7 +73,7 @@ TEST_F(IrqGetTypeTest, BadIrq) {
   dif_irq_type_t type;
 
   EXPECT_DIF_BADARG(dif_cmod_irq_get_type(
-      &cmod_, static_cast<dif_cmod_irq_t>(kDifCmodIrqRxOverflow + 1), &type));
+      &cmod_, static_cast<dif_cmod_irq_t>(kDifCmodIrqTxEmpty + 1), &type));
 }
 
 TEST_F(IrqGetTypeTest, Success) {
@@ -148,9 +148,9 @@ TEST_F(IrqIsPendingTest, Success) {
   // Get the last IRQ state.
   irq_state = true;
   EXPECT_READ32(CMOD_INTR_STATE_REG_OFFSET,
-                {{CMOD_INTR_STATE_RX_OVERFLOW_BIT, false}});
+                {{CMOD_INTR_STATE_TX_EMPTY_BIT, false}});
   EXPECT_DIF_OK(
-      dif_cmod_irq_is_pending(&cmod_, kDifCmodIrqRxOverflow, &irq_state));
+      dif_cmod_irq_is_pending(&cmod_, kDifCmodIrqTxEmpty, &irq_state));
   EXPECT_FALSE(irq_state);
 }
 
@@ -186,8 +186,8 @@ TEST_F(IrqAcknowledgeTest, Success) {
 
   // Clear the last IRQ state.
   EXPECT_WRITE32(CMOD_INTR_STATE_REG_OFFSET,
-                 {{CMOD_INTR_STATE_RX_OVERFLOW_BIT, true}});
-  EXPECT_DIF_OK(dif_cmod_irq_acknowledge(&cmod_, kDifCmodIrqRxOverflow));
+                 {{CMOD_INTR_STATE_TX_EMPTY_BIT, true}});
+  EXPECT_DIF_OK(dif_cmod_irq_acknowledge(&cmod_, kDifCmodIrqTxEmpty));
 }
 
 class IrqForceTest : public CmodTest {};
@@ -209,8 +209,8 @@ TEST_F(IrqForceTest, Success) {
 
   // Force last IRQ.
   EXPECT_WRITE32(CMOD_INTR_TEST_REG_OFFSET,
-                 {{CMOD_INTR_TEST_RX_OVERFLOW_BIT, true}});
-  EXPECT_DIF_OK(dif_cmod_irq_force(&cmod_, kDifCmodIrqRxOverflow, true));
+                 {{CMOD_INTR_TEST_TX_EMPTY_BIT, true}});
+  EXPECT_DIF_OK(dif_cmod_irq_force(&cmod_, kDifCmodIrqTxEmpty, true));
 }
 
 class IrqGetEnabledTest : public CmodTest {};
@@ -249,9 +249,9 @@ TEST_F(IrqGetEnabledTest, Success) {
   // Last IRQ is disabled.
   irq_state = kDifToggleEnabled;
   EXPECT_READ32(CMOD_INTR_ENABLE_REG_OFFSET,
-                {{CMOD_INTR_ENABLE_RX_OVERFLOW_BIT, false}});
+                {{CMOD_INTR_ENABLE_TX_EMPTY_BIT, false}});
   EXPECT_DIF_OK(
-      dif_cmod_irq_get_enabled(&cmod_, kDifCmodIrqRxOverflow, &irq_state));
+      dif_cmod_irq_get_enabled(&cmod_, kDifCmodIrqTxEmpty, &irq_state));
   EXPECT_EQ(irq_state, kDifToggleDisabled);
 }
 
@@ -284,9 +284,9 @@ TEST_F(IrqSetEnabledTest, Success) {
   // Disable last IRQ.
   irq_state = kDifToggleDisabled;
   EXPECT_MASK32(CMOD_INTR_ENABLE_REG_OFFSET,
-                {{CMOD_INTR_ENABLE_RX_OVERFLOW_BIT, 0x1, false}});
+                {{CMOD_INTR_ENABLE_TX_EMPTY_BIT, 0x1, false}});
   EXPECT_DIF_OK(
-      dif_cmod_irq_set_enabled(&cmod_, kDifCmodIrqRxOverflow, irq_state));
+      dif_cmod_irq_set_enabled(&cmod_, kDifCmodIrqTxEmpty, irq_state));
 }
 
 class IrqDisableAllTest : public CmodTest {};

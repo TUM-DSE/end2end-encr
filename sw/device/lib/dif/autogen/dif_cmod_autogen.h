@@ -87,10 +87,6 @@ typedef enum dif_cmod_irq {
    * Raised if the transmit FIFO has emptied.
    */
   kDifCmodIrqTxEmpty = 2,
-  /**
-   * Raised if the receive FIFO has overflowed.
-   */
-  kDifCmodIrqRxOverflow = 3,
 } dif_cmod_irq_t;
 
 /**

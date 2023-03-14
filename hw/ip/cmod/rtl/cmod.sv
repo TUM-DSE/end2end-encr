@@ -30,8 +30,7 @@ module cmod
     // Interrupts
     output logic    intr_tx_watermark_o,
     output logic    intr_rx_watermark_o,
-    output logic    intr_tx_empty_o,
-    output logic    intr_rx_overflow_o,
+    output logic    intr_tx_empty_o
 );
 
     logic [NumAlerts-1:0] alert_test, alerts;
@@ -73,8 +72,7 @@ module cmod
 
         .intr_tx_watermark_o,
         .intr_rx_watermark_o,
-        .intr_tx_empty_o,
-        .intr_rx_overflow_o
+        .intr_tx_empty_o
     );
 
     ////////////
@@ -101,10 +99,4 @@ module cmod
             .alert_tx_o    ( alert_tx_o[i] )
         );
     end
-
-    ////////////////
-    // Assertions //
-    ////////////////
-
-    // TODO: Add 'ASSERTS
 endmodule

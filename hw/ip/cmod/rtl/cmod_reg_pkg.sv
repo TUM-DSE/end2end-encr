@@ -27,9 +27,6 @@ package cmod_reg_pkg;
     struct packed {
       logic        q;
     } tx_empty;
-    struct packed {
-      logic        q;
-    } rx_overflow;
   } cmod_reg2hw_intr_state_reg_t;
 
   typedef struct packed {
@@ -42,9 +39,6 @@ package cmod_reg_pkg;
     struct packed {
       logic        q;
     } tx_empty;
-    struct packed {
-      logic        q;
-    } rx_overflow;
   } cmod_reg2hw_intr_enable_reg_t;
 
   typedef struct packed {
@@ -60,10 +54,6 @@ package cmod_reg_pkg;
       logic        q;
       logic        qe;
     } tx_empty;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } rx_overflow;
   } cmod_reg2hw_intr_test_reg_t;
 
   typedef struct packed {
@@ -79,6 +69,9 @@ package cmod_reg_pkg;
       logic        q;
     } txend;
     struct packed {
+      logic        q;
+    } rxconfirm;
+    struct packed {
       logic [1:0]  q;
     } txilvl;
     struct packed {
@@ -87,6 +80,10 @@ package cmod_reg_pkg;
   } cmod_reg2hw_ctrl_reg_t;
 
   typedef struct packed {
+    struct packed {
+      logic        q;
+      logic        re;
+    } tx;
     struct packed {
       logic        q;
       logic        re;
@@ -102,7 +99,7 @@ package cmod_reg_pkg;
     struct packed {
       logic        q;
       logic        re;
-    } tx;
+    } txinput_ready;
     struct packed {
       logic        q;
       logic        re;
@@ -144,13 +141,35 @@ package cmod_reg_pkg;
       logic        d;
       logic        de;
     } tx_empty;
-    struct packed {
-      logic        d;
-      logic        de;
-    } rx_overflow;
   } cmod_hw2reg_intr_state_reg_t;
 
   typedef struct packed {
+    struct packed {
+      logic        d;
+      logic        de;
+    } txtrigger;
+    struct packed {
+      logic        d;
+      logic        de;
+    } txend;
+    struct packed {
+      logic        d;
+      logic        de;
+    } rxconfirm;
+    struct packed {
+      logic [1:0]  d;
+      logic        de;
+    } txilvl;
+    struct packed {
+      logic [1:0]  d;
+      logic        de;
+    } rxilvl;
+  } cmod_hw2reg_ctrl_reg_t;
+
+  typedef struct packed {
+    struct packed {
+      logic        d;
+    } tx;
     struct packed {
       logic        d;
     } txfull;
@@ -162,7 +181,7 @@ package cmod_reg_pkg;
     } txempty;
     struct packed {
       logic        d;
-    } tx;
+    } txinput_ready;
     struct packed {
       logic        d;
     } rxvalid;
@@ -188,20 +207,21 @@ package cmod_reg_pkg;
 
   // Register -> HW type
   typedef struct packed {
-    cmod_reg2hw_intr_state_reg_t intr_state; // [307:304]
-    cmod_reg2hw_intr_enable_reg_t intr_enable; // [303:300]
-    cmod_reg2hw_intr_test_reg_t intr_test; // [299:292]
-    cmod_reg2hw_alert_test_reg_t alert_test; // [291:290]
-    cmod_reg2hw_ctrl_reg_t ctrl; // [289:284]
-    cmod_reg2hw_status_reg_t status; // [283:264]
+    cmod_reg2hw_intr_state_reg_t intr_state; // [306:304]
+    cmod_reg2hw_intr_enable_reg_t intr_enable; // [303:301]
+    cmod_reg2hw_intr_test_reg_t intr_test; // [300:295]
+    cmod_reg2hw_alert_test_reg_t alert_test; // [294:293]
+    cmod_reg2hw_ctrl_reg_t ctrl; // [292:286]
+    cmod_reg2hw_status_reg_t status; // [285:264]
     cmod_reg2hw_wdata_mreg_t [3:0] wdata; // [263:132]
     cmod_reg2hw_rdata_mreg_t [3:0] rdata; // [131:0]
   } cmod_reg2hw_t;
 
   // HW -> register type
   typedef struct packed {
-    cmod_hw2reg_intr_state_reg_t intr_state; // [279:272]
-    cmod_hw2reg_status_reg_t status; // [271:260]
+    cmod_hw2reg_intr_state_reg_t intr_state; // [290:285]
+    cmod_hw2reg_ctrl_reg_t ctrl; // [284:273]
+    cmod_hw2reg_status_reg_t status; // [272:260]
     cmod_hw2reg_wdata_mreg_t [3:0] wdata; // [259:128]
     cmod_hw2reg_rdata_mreg_t [3:0] rdata; // [127:0]
   } cmod_hw2reg_t;
@@ -223,14 +243,13 @@ package cmod_reg_pkg;
   parameter logic [BlockAw-1:0] CMOD_RDATA_3_OFFSET = 6'h 34;
 
   // Reset values for hwext registers and their fields
-  parameter logic [3:0] CMOD_INTR_TEST_RESVAL = 4'h 0;
+  parameter logic [2:0] CMOD_INTR_TEST_RESVAL = 3'h 0;
   parameter logic [0:0] CMOD_INTR_TEST_TX_WATERMARK_RESVAL = 1'h 0;
   parameter logic [0:0] CMOD_INTR_TEST_RX_WATERMARK_RESVAL = 1'h 0;
   parameter logic [0:0] CMOD_INTR_TEST_TX_EMPTY_RESVAL = 1'h 0;
-  parameter logic [0:0] CMOD_INTR_TEST_RX_OVERFLOW_RESVAL = 1'h 0;
   parameter logic [0:0] CMOD_ALERT_TEST_RESVAL = 1'h 0;
   parameter logic [0:0] CMOD_ALERT_TEST_FATAL_FAULT_RESVAL = 1'h 0;
-  parameter logic [11:0] CMOD_STATUS_RESVAL = 12'h 0;
+  parameter logic [12:0] CMOD_STATUS_RESVAL = 13'h 0;
   parameter logic [31:0] CMOD_RDATA_0_RESVAL = 32'h 0;
   parameter logic [31:0] CMOD_RDATA_0_RDATA_0_RESVAL = 32'h 0;
   parameter logic [31:0] CMOD_RDATA_1_RESVAL = 32'h 0;

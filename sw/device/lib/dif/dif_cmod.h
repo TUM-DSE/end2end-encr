@@ -18,47 +18,42 @@
 extern "C" {
 #endif  // __cplusplus
 
+/*
+ * The size of the CMOD WDATA and RDATA FIFOs, in multiple of 4 bytes.
+ */
+extern const uint32_t kDifCmodFifoSize;
+
 /**
  * A CMOD FIFO watermark depth configuration.
  */
 typedef enum dif_cmod_watermark {
   /**
-   * Indicates a one data block watermark.
+   * Indicates a depth of one.
    */
-  kDifCmodWatermarkDataBlock1 = 0,
+  kDifCmodWatermarkDepth1 = 0,
   /**
-   * Indicates a two data blocks watermark.
+   * Indicates a depth of two.
    */
-  kDifCmodWatermarkDataBlock2,
+  kDifCmodWatermarkDepth2,
   /**
-   * Indicates a three data blocks watermark.
+   * Indicates a depth of three.
    */
-  kDifCmodWatermarkDataBlock3,
+  kDifCmodWatermarkDepth3,
   /**
-   * Indicates a four data blocks watermark.
+   * Indicates a depth of four.
    */
-  kDifCmodWatermarkDataBlock4,
+  kDifCmodWatermarkDepth4,
 } dif_cmod_watermark_t;
 
-typedef struct dif_cmod_data {
-  uint32_t data[4];
-} dif_cmod_data_t;
-
-// TODO: update
 /**
- * The size of the CMOD TX and RX FIFOs, in blocks of 4 bytes.
- */
-extern const uint32_t kDifCmodFifoSizeBlocks;
-
-/**
- * Sets the RX FIFO watermark.
+ * Sets the RDATA FIFO watermark.
  *
  * This function is only useful when the corresponding interrupt is enabled.
- * When the queued RX FIFO number of data blocks rises to or above this
+ * When the queued RDATA FIFO number of data blocks rises to or above this
  * level, the RX watermark interrupt is raised.
  *
  * @param cmod A cmod handle.
- * @param watermark RX FIFO watermark.
+ * @param watermark RDATA FIFO watermark.
  * @return The result of the operation.
  */
 OT_WARN_UNUSED_RESULT
@@ -66,73 +61,53 @@ dif_result_t dif_cmod_watermark_rx_set(const dif_cmod_t *cmod,
                                        dif_cmod_watermark_t watermark);
 
 /**
- * Sets the TX FIFO watermark.
+ * Sets the WDATA FIFO watermark.
  *
  * This function is only useful when the corresponding interrupt is enabled.
- * When the queued TX FIFO number of data blocks sinks below this
+ * When the queued WDATA FIFO number of data blocks sinks below this
  * level, the TX watermark interrupt is raised.
  *
  * @param cmod A cmod handle.
- * @param watermark TX FIFO watermark.
+ * @param watermark WDATA FIFO watermark.
  * @return The result of the operation.
  */
 OT_WARN_UNUSED_RESULT
 dif_result_t dif_cmod_watermark_tx_set(const dif_cmod_t *cmod,
                                        dif_cmod_watermark_t watermark);
 
-// TODO: remove or update
+/**
+ * Sets the TXTRIGGER bit of the CTRL register.
+ *
+ * This marks the beginning of a new message.
+ *
+ * @param cmod A cmod handle.
+ * @return The result of the operation.
+ */
 OT_WARN_UNUSED_RESULT
 dif_result_t dif_cmod_txtrigger(const dif_cmod_t *cmod);
 
 /**
- * Transmits 4 bytes of data.
+ * Sets the TXEND bit of the CTRL register.
  *
- * The peripheral must be able to accept the input (TXFULL unset), and
- * will return `kDifUnavailable` if this condition is not met.
+ * This marks the end of a message and is set after the last data block of the
+ * message is loaded into the CMOD module.
  *
- * @param cmod A CMOD handle.
- * @param data Data to be transmitted.
+ * @param cmod A cmod handle.
  * @return The result of the operation.
  */
 OT_WARN_UNUSED_RESULT
-dif_result_t dif_cmod_send_data(const dif_cmod_t *cmod, dif_cmod_data_t data);
+dif_result_t dif_cmod_txend(const dif_cmod_t *cmod);
 
 /**
- * Read 4 bytes of received data.
+ * Sets the RXCONFIRM bit of the CTRL register.
  *
- * The peripheral must have valid data (RXVALID set), and will
- * return `kDifUnavailable` if this condition is not met.
- */
-OT_WARN_UNUSED_RESULT
-dif_result_t dif_cmod_read_data(const dif_cmod_t *cmod, dif_cmod_data_t *data);
-
-// TODO: update
-/**
- * Gets the number of blocks available to be read from the CMOD RX FIFO.
+ * This confirms that the processor knows, that the last data block of a
+ * message was read from the CMOD module.
  *
- * This function can be used to check FIFO full and empty conditions.
- *
- * @param cmod A CMOD handle.
- * @param[out] num_blocks Number of blocks available to be read.
+ * @param cmod A cmod handle.
  * @return The result of the operation.
  */
-OT_WARN_UNUSED_RESULT
-dif_result_t dif_cmod_rx_blocks_available(const dif_cmod_t *cmod,
-                                          size_t *num_blocks);
-
-// TODO: update
-/**
- * Gets the number of blocks available to be written to the CMOD TX FIFO.
- *
- * This function can be used to check FIFO full and empty conditions.
- *
- * @param cmod A CMOD handle.
- * @param[out] num_blocks Number of blocks available to be written.
- * @return The result of the operation.
- */
-OT_WARN_UNUSED_RESULT
-dif_result_t dif_cmod_tx_blocks_available(const dif_cmod_t *cmod,
-                                          size_t *num_blocks);
+dif_result_t dif_cmod_rxconfirm(const dif_cmod_t *cmod);
 
 /**
  * CMOD Status flags.
@@ -141,8 +116,10 @@ typedef enum dif_cmod_status {
   kDifCmodStatusTxfull = 0,
   kDifCmodStatusTxempty,
   kDifCmodStatusTx,
+  kDifCmodStatusTxinputReady,
   kDifCmodStatusRxfull,
   kDifCmodStatusRxvalid,
+  kDifCmodStatusRxlast,
 } dif_cmod_status_t;
 
 /**
@@ -156,12 +133,60 @@ typedef enum dif_cmod_status {
 dif_result_t dif_cmod_get_status(const dif_cmod_t *cmod, dif_cmod_status_t flag,
                                  bool *set);
 
-// TODO: Remove or update
-dif_result_t dif_cmod_get_tx_lvl(const dif_cmod_t *cmod, uint32_t *val);
+/**
+ * Gets the lvl of the WDATA FIFO.
+ *
+ * @param cmod A cmod handle.
+ * @param[out] lvl The current lvl of the WDATA FIFO.
+ * @return The result of the operation.
+ */
+dif_result_t dif_cmod_get_txlvl(const dif_cmod_t *cmod, size_t *lvl);
 
-dif_result_t dif_cmod_get_rx_lvl(const dif_cmod_t *cmod, uint32_t *val);
+/**
+ * Gets the lvl of the RDATA FIFO.
+ *
+ * @param cmod A cmod handle.
+ * @param[out] lvl The current lvl of the RDATA FIFO.
+ * @return The result of the operation.
+ */
+dif_result_t dif_cmod_get_rxlvl(const dif_cmod_t *cmod, size_t *lvl);
 
-// TODO: Add transaction methods
+/*
+ * A typed representation of the CMOD data.
+ */
+typedef struct dif_cmod_data {
+  uint32_t data[4];
+} dif_cmod_data_t;
+
+/**
+ * Loads the CMOD Input Data (WDATA).
+ *
+ * The CMOD module must be able to accept input (TXINPUT_READY is set).
+ * `kDifUnavailable` will be returned if this condition is not met.
+ *
+ * @param cmod A cmod handle.
+ * @param data CMOD Input Data.
+ * @return The result of the operation.
+ */
+OT_WARN_UNUSED_RESULT
+dif_result_t dif_cmod_load_data(const dif_cmod_t *cmod,
+                                const dif_cmod_data_t data);
+
+/**
+ * Reads the CMOD Output Data (RDATA).
+ *
+ * The CMOD module must have available data (RXVALID is set).
+ * `kDifUnavailable` will be returned if this condition is not met.
+ *
+ * If the last data block of a message was received and not confirmed yet
+ * (RXLAST is set), `kDifError` will be returned.
+ *
+ * @param cmod A cmod handle.
+ * @param[out] data CMOD Output Data.
+ * @return The result of the operation.
+ */
+OT_WARN_UNUSED_RESULT
+dif_result_t dif_cmod_read_data(const dif_cmod_t *cmod, dif_cmod_data_t *data);
 
 #ifdef __cplusplus
 }  // extern "C"

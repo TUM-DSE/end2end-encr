@@ -11,7 +11,7 @@
  * `top_earlgrey_plic_peripheral_t`.
  */
 const top_earlgrey_plic_peripheral_t
-    top_earlgrey_plic_interrupt_for_peripheral[193] = {
+    top_earlgrey_plic_interrupt_for_peripheral[191] = {
   [kTopEarlgreyPlicIrqIdNone] = kTopEarlgreyPlicPeripheralUnknown,
   [kTopEarlgreyPlicIrqIdUart0TxWatermark] = kTopEarlgreyPlicPeripheralUart0,
   [kTopEarlgreyPlicIrqIdUart0RxWatermark] = kTopEarlgreyPlicPeripheralUart0,
@@ -200,11 +200,9 @@ const top_earlgrey_plic_peripheral_t
   [kTopEarlgreyPlicIrqIdCmod0TxWatermark] = kTopEarlgreyPlicPeripheralCmod0,
   [kTopEarlgreyPlicIrqIdCmod0RxWatermark] = kTopEarlgreyPlicPeripheralCmod0,
   [kTopEarlgreyPlicIrqIdCmod0TxEmpty] = kTopEarlgreyPlicPeripheralCmod0,
-  [kTopEarlgreyPlicIrqIdCmod0RxOverflow] = kTopEarlgreyPlicPeripheralCmod0,
   [kTopEarlgreyPlicIrqIdCmod1TxWatermark] = kTopEarlgreyPlicPeripheralCmod1,
   [kTopEarlgreyPlicIrqIdCmod1RxWatermark] = kTopEarlgreyPlicPeripheralCmod1,
   [kTopEarlgreyPlicIrqIdCmod1TxEmpty] = kTopEarlgreyPlicPeripheralCmod1,
-  [kTopEarlgreyPlicIrqIdCmod1RxOverflow] = kTopEarlgreyPlicPeripheralCmod1,
 };
 
 

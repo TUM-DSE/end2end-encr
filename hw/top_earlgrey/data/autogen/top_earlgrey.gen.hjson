@@ -14061,12 +14061,6 @@
       module_name: cmod0
     }
     {
-      name: cmod0_rx_overflow
-      width: 1
-      type: interrupt
-      module_name: cmod0
-    }
-    {
       name: cmod1_tx_watermark
       width: 1
       type: interrupt
@@ -14080,12 +14074,6 @@
     }
     {
       name: cmod1_tx_empty
-      width: 1
-      type: interrupt
-      module_name: cmod1
-    }
-    {
-      name: cmod1_rx_overflow
       width: 1
       type: interrupt
       module_name: cmod1

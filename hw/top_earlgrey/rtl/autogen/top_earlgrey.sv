@@ -360,7 +360,7 @@ module top_earlgrey #(
   // rv_core_ibex
 
 
-  logic [192:0]  intr_vector;
+  logic [190:0]  intr_vector;
   // Interrupt source list
   logic intr_uart0_tx_watermark;
   logic intr_uart0_rx_watermark;
@@ -518,11 +518,9 @@ module top_earlgrey #(
   logic intr_cmod0_tx_watermark;
   logic intr_cmod0_rx_watermark;
   logic intr_cmod0_tx_empty;
-  logic intr_cmod0_rx_overflow;
   logic intr_cmod1_tx_watermark;
   logic intr_cmod1_rx_watermark;
   logic intr_cmod1_tx_empty;
-  logic intr_cmod1_rx_overflow;
 
   // Alert list
   prim_alert_pkg::alert_tx_t [alert_pkg::NAlerts-1:0]  alert_tx;
@@ -2497,7 +2495,6 @@ module top_earlgrey #(
       .intr_tx_watermark_o (intr_cmod0_tx_watermark),
       .intr_rx_watermark_o (intr_cmod0_rx_watermark),
       .intr_tx_empty_o     (intr_cmod0_tx_empty),
-      .intr_rx_overflow_o  (intr_cmod0_rx_overflow),
       // [59]: fatal_fault
       .alert_tx_o  ( alert_tx[59:59] ),
       .alert_rx_i  ( alert_rx[59:59] ),
@@ -2522,7 +2519,6 @@ module top_earlgrey #(
       .intr_tx_watermark_o (intr_cmod1_tx_watermark),
       .intr_rx_watermark_o (intr_cmod1_rx_watermark),
       .intr_tx_empty_o     (intr_cmod1_tx_empty),
-      .intr_rx_overflow_o  (intr_cmod1_rx_overflow),
       // [60]: fatal_fault
       .alert_tx_o  ( alert_tx[60:60] ),
       .alert_rx_i  ( alert_rx[60:60] ),
@@ -2673,11 +2669,9 @@ module top_earlgrey #(
   );
   // interrupt assignments
   assign intr_vector = {
-      intr_cmod1_rx_overflow, // IDs [192 +: 1]
-      intr_cmod1_tx_empty, // IDs [191 +: 1]
-      intr_cmod1_rx_watermark, // IDs [190 +: 1]
-      intr_cmod1_tx_watermark, // IDs [189 +: 1]
-      intr_cmod0_rx_overflow, // IDs [188 +: 1]
+      intr_cmod1_tx_empty, // IDs [190 +: 1]
+      intr_cmod1_rx_watermark, // IDs [189 +: 1]
+      intr_cmod1_tx_watermark, // IDs [188 +: 1]
       intr_cmod0_tx_empty, // IDs [187 +: 1]
       intr_cmod0_rx_watermark, // IDs [186 +: 1]
       intr_cmod0_tx_watermark, // IDs [185 +: 1]

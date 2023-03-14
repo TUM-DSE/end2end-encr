@@ -1197,7 +1197,7 @@ static void peripheral_irqs_trigger(void) {
 
   peripheral_expected = kTopEarlgreyPlicPeripheralCmod0;
   for (dif_cmod_irq_t irq = kDifCmodIrqTxWatermark;
-       irq <= kDifCmodIrqRxOverflow; ++irq) {
+       irq <= kDifCmodIrqTxEmpty; ++irq) {
     cmod_irq_expected = irq;
     LOG_INFO("Triggering cmod0 IRQ %d.", irq);
     CHECK_DIF_OK(dif_cmod_irq_force(&cmod0, irq, true));
@@ -1211,7 +1211,7 @@ static void peripheral_irqs_trigger(void) {
 
   peripheral_expected = kTopEarlgreyPlicPeripheralCmod1;
   for (dif_cmod_irq_t irq = kDifCmodIrqTxWatermark;
-       irq <= kDifCmodIrqRxOverflow; ++irq) {
+       irq <= kDifCmodIrqTxEmpty; ++irq) {
     cmod_irq_expected = irq;
     LOG_INFO("Triggering cmod1 IRQ %d.", irq);
     CHECK_DIF_OK(dif_cmod_irq_force(&cmod1, irq, true));

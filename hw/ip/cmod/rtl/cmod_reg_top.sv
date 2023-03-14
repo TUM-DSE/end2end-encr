@@ -131,8 +131,6 @@ module cmod_reg_top (
   logic intr_state_rx_watermark_wd;
   logic intr_state_tx_empty_qs;
   logic intr_state_tx_empty_wd;
-  logic intr_state_rx_overflow_qs;
-  logic intr_state_rx_overflow_wd;
   logic intr_enable_we;
   logic intr_enable_tx_watermark_qs;
   logic intr_enable_tx_watermark_wd;
@@ -140,13 +138,10 @@ module cmod_reg_top (
   logic intr_enable_rx_watermark_wd;
   logic intr_enable_tx_empty_qs;
   logic intr_enable_tx_empty_wd;
-  logic intr_enable_rx_overflow_qs;
-  logic intr_enable_rx_overflow_wd;
   logic intr_test_we;
   logic intr_test_tx_watermark_wd;
   logic intr_test_rx_watermark_wd;
   logic intr_test_tx_empty_wd;
-  logic intr_test_rx_overflow_wd;
   logic alert_test_we;
   logic alert_test_wd;
   logic ctrl_we;
@@ -154,15 +149,18 @@ module cmod_reg_top (
   logic ctrl_txtrigger_wd;
   logic ctrl_txend_qs;
   logic ctrl_txend_wd;
+  logic ctrl_rxconfirm_qs;
+  logic ctrl_rxconfirm_wd;
   logic [1:0] ctrl_txilvl_qs;
   logic [1:0] ctrl_txilvl_wd;
   logic [1:0] ctrl_rxilvl_qs;
   logic [1:0] ctrl_rxilvl_wd;
   logic status_re;
+  logic status_tx_qs;
   logic status_txfull_qs;
   logic status_rxfull_qs;
   logic status_txempty_qs;
-  logic status_tx_qs;
+  logic status_txinput_ready_qs;
   logic status_rxvalid_qs;
   logic [2:0] status_txlvl_qs;
   logic [2:0] status_rxlvl_qs;
@@ -264,32 +262,6 @@ module cmod_reg_top (
     .qs     (intr_state_tx_empty_qs)
   );
 
-  //   F[rx_overflow]: 3:3
-  prim_subreg #(
-    .DW      (1),
-    .SwAccess(prim_subreg_pkg::SwAccessW1C),
-    .RESVAL  (1'h0)
-  ) u_intr_state_rx_overflow (
-    .clk_i   (clk_i),
-    .rst_ni  (rst_ni),
-
-    // from register interface
-    .we     (intr_state_we),
-    .wd     (intr_state_rx_overflow_wd),
-
-    // from internal hardware
-    .de     (hw2reg.intr_state.rx_overflow.de),
-    .d      (hw2reg.intr_state.rx_overflow.d),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.intr_state.rx_overflow.q),
-    .ds     (),
-
-    // to register interface (read)
-    .qs     (intr_state_rx_overflow_qs)
-  );
-
 
   // R[intr_enable]: V(False)
   //   F[tx_watermark]: 0:0
@@ -370,36 +342,10 @@ module cmod_reg_top (
     .qs     (intr_enable_tx_empty_qs)
   );
 
-  //   F[rx_overflow]: 3:3
-  prim_subreg #(
-    .DW      (1),
-    .SwAccess(prim_subreg_pkg::SwAccessRW),
-    .RESVAL  (1'h0)
-  ) u_intr_enable_rx_overflow (
-    .clk_i   (clk_i),
-    .rst_ni  (rst_ni),
-
-    // from register interface
-    .we     (intr_enable_we),
-    .wd     (intr_enable_rx_overflow_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.intr_enable.rx_overflow.q),
-    .ds     (),
-
-    // to register interface (read)
-    .qs     (intr_enable_rx_overflow_qs)
-  );
-
 
   // R[intr_test]: V(True)
   logic intr_test_qe;
-  logic [3:0] intr_test_flds_we;
+  logic [2:0] intr_test_flds_we;
   assign intr_test_qe = &intr_test_flds_we;
   //   F[tx_watermark]: 0:0
   prim_subreg_ext #(
@@ -449,22 +395,6 @@ module cmod_reg_top (
   );
   assign reg2hw.intr_test.tx_empty.qe = intr_test_qe;
 
-  //   F[rx_overflow]: 3:3
-  prim_subreg_ext #(
-    .DW    (1)
-  ) u_intr_test_rx_overflow (
-    .re     (1'b0),
-    .we     (intr_test_we),
-    .wd     (intr_test_rx_overflow_wd),
-    .d      ('0),
-    .qre    (),
-    .qe     (intr_test_flds_we[3]),
-    .q      (reg2hw.intr_test.rx_overflow.q),
-    .ds     (),
-    .qs     ()
-  );
-  assign reg2hw.intr_test.rx_overflow.qe = intr_test_qe;
-
 
   // R[alert_test]: V(True)
   logic alert_test_qe;
@@ -501,8 +431,8 @@ module cmod_reg_top (
     .wd     (ctrl_txtrigger_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0),
+    .de     (hw2reg.ctrl.txtrigger.de),
+    .d      (hw2reg.ctrl.txtrigger.d),
 
     // to internal hardware
     .qe     (),
@@ -527,8 +457,8 @@ module cmod_reg_top (
     .wd     (ctrl_txend_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0),
+    .de     (hw2reg.ctrl.txend.de),
+    .d      (hw2reg.ctrl.txend.d),
 
     // to internal hardware
     .qe     (),
@@ -539,7 +469,33 @@ module cmod_reg_top (
     .qs     (ctrl_txend_qs)
   );
 
-  //   F[txilvl]: 3:2
+  //   F[rxconfirm]: 2:2
+  prim_subreg #(
+    .DW      (1),
+    .SwAccess(prim_subreg_pkg::SwAccessRW),
+    .RESVAL  (1'h0)
+  ) u_ctrl_rxconfirm (
+    .clk_i   (clk_i),
+    .rst_ni  (rst_ni),
+
+    // from register interface
+    .we     (ctrl_we),
+    .wd     (ctrl_rxconfirm_wd),
+
+    // from internal hardware
+    .de     (hw2reg.ctrl.rxconfirm.de),
+    .d      (hw2reg.ctrl.rxconfirm.d),
+
+    // to internal hardware
+    .qe     (),
+    .q      (reg2hw.ctrl.rxconfirm.q),
+    .ds     (),
+
+    // to register interface (read)
+    .qs     (ctrl_rxconfirm_qs)
+  );
+
+  //   F[txilvl]: 4:3
   prim_subreg #(
     .DW      (2),
     .SwAccess(prim_subreg_pkg::SwAccessRW),
@@ -553,8 +509,8 @@ module cmod_reg_top (
     .wd     (ctrl_txilvl_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0),
+    .de     (hw2reg.ctrl.txilvl.de),
+    .d      (hw2reg.ctrl.txilvl.d),
 
     // to internal hardware
     .qe     (),
@@ -565,7 +521,7 @@ module cmod_reg_top (
     .qs     (ctrl_txilvl_qs)
   );
 
-  //   F[rxilvl]: 5:4
+  //   F[rxilvl]: 6:5
   prim_subreg #(
     .DW      (2),
     .SwAccess(prim_subreg_pkg::SwAccessRW),
@@ -579,8 +535,8 @@ module cmod_reg_top (
     .wd     (ctrl_rxilvl_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0),
+    .de     (hw2reg.ctrl.rxilvl.de),
+    .d      (hw2reg.ctrl.rxilvl.d),
 
     // to internal hardware
     .qe     (),
@@ -593,52 +549,7 @@ module cmod_reg_top (
 
 
   // R[status]: V(True)
-  //   F[txfull]: 0:0
-  prim_subreg_ext #(
-    .DW    (1)
-  ) u_status_txfull (
-    .re     (status_re),
-    .we     (1'b0),
-    .wd     ('0),
-    .d      (hw2reg.status.txfull.d),
-    .qre    (reg2hw.status.txfull.re),
-    .qe     (),
-    .q      (reg2hw.status.txfull.q),
-    .ds     (),
-    .qs     (status_txfull_qs)
-  );
-
-  //   F[rxfull]: 1:1
-  prim_subreg_ext #(
-    .DW    (1)
-  ) u_status_rxfull (
-    .re     (status_re),
-    .we     (1'b0),
-    .wd     ('0),
-    .d      (hw2reg.status.rxfull.d),
-    .qre    (reg2hw.status.rxfull.re),
-    .qe     (),
-    .q      (reg2hw.status.rxfull.q),
-    .ds     (),
-    .qs     (status_rxfull_qs)
-  );
-
-  //   F[txempty]: 2:2
-  prim_subreg_ext #(
-    .DW    (1)
-  ) u_status_txempty (
-    .re     (status_re),
-    .we     (1'b0),
-    .wd     ('0),
-    .d      (hw2reg.status.txempty.d),
-    .qre    (reg2hw.status.txempty.re),
-    .qe     (),
-    .q      (reg2hw.status.txempty.q),
-    .ds     (),
-    .qs     (status_txempty_qs)
-  );
-
-  //   F[tx]: 3:3
+  //   F[tx]: 0:0
   prim_subreg_ext #(
     .DW    (1)
   ) u_status_tx (
@@ -653,7 +564,67 @@ module cmod_reg_top (
     .qs     (status_tx_qs)
   );
 
-  //   F[rxvalid]: 4:4
+  //   F[txfull]: 1:1
+  prim_subreg_ext #(
+    .DW    (1)
+  ) u_status_txfull (
+    .re     (status_re),
+    .we     (1'b0),
+    .wd     ('0),
+    .d      (hw2reg.status.txfull.d),
+    .qre    (reg2hw.status.txfull.re),
+    .qe     (),
+    .q      (reg2hw.status.txfull.q),
+    .ds     (),
+    .qs     (status_txfull_qs)
+  );
+
+  //   F[rxfull]: 2:2
+  prim_subreg_ext #(
+    .DW    (1)
+  ) u_status_rxfull (
+    .re     (status_re),
+    .we     (1'b0),
+    .wd     ('0),
+    .d      (hw2reg.status.rxfull.d),
+    .qre    (reg2hw.status.rxfull.re),
+    .qe     (),
+    .q      (reg2hw.status.rxfull.q),
+    .ds     (),
+    .qs     (status_rxfull_qs)
+  );
+
+  //   F[txempty]: 3:3
+  prim_subreg_ext #(
+    .DW    (1)
+  ) u_status_txempty (
+    .re     (status_re),
+    .we     (1'b0),
+    .wd     ('0),
+    .d      (hw2reg.status.txempty.d),
+    .qre    (reg2hw.status.txempty.re),
+    .qe     (),
+    .q      (reg2hw.status.txempty.q),
+    .ds     (),
+    .qs     (status_txempty_qs)
+  );
+
+  //   F[txinput_ready]: 4:4
+  prim_subreg_ext #(
+    .DW    (1)
+  ) u_status_txinput_ready (
+    .re     (status_re),
+    .we     (1'b0),
+    .wd     ('0),
+    .d      (hw2reg.status.txinput_ready.d),
+    .qre    (reg2hw.status.txinput_ready.re),
+    .qe     (),
+    .q      (reg2hw.status.txinput_ready.q),
+    .ds     (),
+    .qs     (status_txinput_ready_qs)
+  );
+
+  //   F[rxvalid]: 5:5
   prim_subreg_ext #(
     .DW    (1)
   ) u_status_rxvalid (
@@ -668,7 +639,7 @@ module cmod_reg_top (
     .qs     (status_rxvalid_qs)
   );
 
-  //   F[txlvl]: 7:5
+  //   F[txlvl]: 8:6
   prim_subreg_ext #(
     .DW    (3)
   ) u_status_txlvl (
@@ -683,7 +654,7 @@ module cmod_reg_top (
     .qs     (status_txlvl_qs)
   );
 
-  //   F[rxlvl]: 10:8
+  //   F[rxlvl]: 11:9
   prim_subreg_ext #(
     .DW    (3)
   ) u_status_rxlvl (
@@ -698,7 +669,7 @@ module cmod_reg_top (
     .qs     (status_rxlvl_qs)
   );
 
-  //   F[rxlast]: 11:11
+  //   F[rxlast]: 12:12
   prim_subreg_ext #(
     .DW    (1)
   ) u_status_rxlast (
@@ -991,8 +962,6 @@ module cmod_reg_top (
   assign intr_state_rx_watermark_wd = reg_wdata[1];
 
   assign intr_state_tx_empty_wd = reg_wdata[2];
-
-  assign intr_state_rx_overflow_wd = reg_wdata[3];
   assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
 
   assign intr_enable_tx_watermark_wd = reg_wdata[0];
@@ -1000,8 +969,6 @@ module cmod_reg_top (
   assign intr_enable_rx_watermark_wd = reg_wdata[1];
 
   assign intr_enable_tx_empty_wd = reg_wdata[2];
-
-  assign intr_enable_rx_overflow_wd = reg_wdata[3];
   assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
 
   assign intr_test_tx_watermark_wd = reg_wdata[0];
@@ -1009,8 +976,6 @@ module cmod_reg_top (
   assign intr_test_rx_watermark_wd = reg_wdata[1];
 
   assign intr_test_tx_empty_wd = reg_wdata[2];
-
-  assign intr_test_rx_overflow_wd = reg_wdata[3];
   assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
@@ -1020,9 +985,11 @@ module cmod_reg_top (
 
   assign ctrl_txend_wd = reg_wdata[1];
 
-  assign ctrl_txilvl_wd = reg_wdata[3:2];
+  assign ctrl_rxconfirm_wd = reg_wdata[2];
 
-  assign ctrl_rxilvl_wd = reg_wdata[5:4];
+  assign ctrl_txilvl_wd = reg_wdata[4:3];
+
+  assign ctrl_rxilvl_wd = reg_wdata[6:5];
   assign status_re = addr_hit[5] & reg_re & !reg_error;
   assign wdata_0_we = addr_hit[6] & reg_we & !reg_error;
 
@@ -1068,21 +1035,18 @@ module cmod_reg_top (
         reg_rdata_next[0] = intr_state_tx_watermark_qs;
         reg_rdata_next[1] = intr_state_rx_watermark_qs;
         reg_rdata_next[2] = intr_state_tx_empty_qs;
-        reg_rdata_next[3] = intr_state_rx_overflow_qs;
       end
 
       addr_hit[1]: begin
         reg_rdata_next[0] = intr_enable_tx_watermark_qs;
         reg_rdata_next[1] = intr_enable_rx_watermark_qs;
         reg_rdata_next[2] = intr_enable_tx_empty_qs;
-        reg_rdata_next[3] = intr_enable_rx_overflow_qs;
       end
 
       addr_hit[2]: begin
         reg_rdata_next[0] = '0;
         reg_rdata_next[1] = '0;
         reg_rdata_next[2] = '0;
-        reg_rdata_next[3] = '0;
       end
 
       addr_hit[3]: begin
@@ -1092,19 +1056,21 @@ module cmod_reg_top (
       addr_hit[4]: begin
         reg_rdata_next[0] = ctrl_txtrigger_qs;
         reg_rdata_next[1] = ctrl_txend_qs;
-        reg_rdata_next[3:2] = ctrl_txilvl_qs;
-        reg_rdata_next[5:4] = ctrl_rxilvl_qs;
+        reg_rdata_next[2] = ctrl_rxconfirm_qs;
+        reg_rdata_next[4:3] = ctrl_txilvl_qs;
+        reg_rdata_next[6:5] = ctrl_rxilvl_qs;
       end
 
       addr_hit[5]: begin
-        reg_rdata_next[0] = status_txfull_qs;
-        reg_rdata_next[1] = status_rxfull_qs;
-        reg_rdata_next[2] = status_txempty_qs;
-        reg_rdata_next[3] = status_tx_qs;
-        reg_rdata_next[4] = status_rxvalid_qs;
-        reg_rdata_next[7:5] = status_txlvl_qs;
-        reg_rdata_next[10:8] = status_rxlvl_qs;
-        reg_rdata_next[11] = status_rxlast_qs;
+        reg_rdata_next[0] = status_tx_qs;
+        reg_rdata_next[1] = status_txfull_qs;
+        reg_rdata_next[2] = status_rxfull_qs;
+        reg_rdata_next[3] = status_txempty_qs;
+        reg_rdata_next[4] = status_txinput_ready_qs;
+        reg_rdata_next[5] = status_rxvalid_qs;
+        reg_rdata_next[8:6] = status_txlvl_qs;
+        reg_rdata_next[11:9] = status_rxlvl_qs;
+        reg_rdata_next[12] = status_rxlast_qs;
       end
 
       addr_hit[6]: begin

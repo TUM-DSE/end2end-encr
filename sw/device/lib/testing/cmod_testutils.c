@@ -17,6 +17,9 @@ void log_tx_status_regs(dif_cmod_t *cmod) {
 
   val = cmod_testutils_get_status(cmod, kDifCmodStatusTxempty);
   LOG_INFO("TXEMPTY: %i", val);
+
+  val = cmod_testutils_get_status(cmod, kDifCmodStatusTxinputReady);
+  LOG_INFO("TXINPUT_READY: %i", val);
 }
 
 void log_rx_status_regs(dif_cmod_t *cmod) {
@@ -27,6 +30,9 @@ void log_rx_status_regs(dif_cmod_t *cmod) {
 
   val = cmod_testutils_get_status(cmod, kDifCmodStatusRxfull);
   LOG_INFO("RXFULL: %i", val);
+
+  val = cmod_testutils_get_status(cmod, kDifCmodStatusRxlast);
+  LOG_INFO("RXLAST: %i", val);
 }
 
 void log_status_regs(dif_cmod_t *cmod) {

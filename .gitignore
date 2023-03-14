@@ -6,6 +6,7 @@ tags
 __pycache__
 /.vscode
 opentitan-docs
+cmod_perftest_results
 
 # fusesoc result
 build/
