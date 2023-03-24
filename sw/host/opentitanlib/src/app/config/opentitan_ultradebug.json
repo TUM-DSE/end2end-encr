@@ -1,0 +1,19 @@
+{
+  "includes": ["/__builtin__/opentitan.json"],
+  "interface": "ultradebug",
+  "pins": [
+    {
+      "name": "RESET",
+      "alias_of": "RESET_B"
+    },
+    {
+      "name": "BOOTSTRAP"
+    }
+  ],
+  "uarts": [
+    {
+      "name": "console",
+      "alias_of": "0"
+    }
+  ]
+}
